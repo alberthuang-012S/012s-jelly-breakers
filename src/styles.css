@@ -1392,3 +1392,52 @@ img{
   .flying-bubble, .bubble-impact { display: none; }
   .swimmer.firing .jelly-art { transform: none; }
 }
+
+/* Pearl Sea: numbered keys stay readable over both plain and iced cubes. */
+.pearl-field .track-base { stroke: #eee2dc; fill: #fff0e640; }
+.pearl-field .track-shadow { stroke: #ddc9bf; }
+.pearl-field .track-arrows { stroke: #c5a99a; }
+.pearl-mark {
+  position: absolute; z-index: 3; inset: 15%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #fff 15%, #fff3df 45%, #bca9ca);
+  color: #6b597a; font: 800 9px/1 sans-serif; display: grid; place-items: center;
+  box-shadow: 0 1px 2px #56465a50; border: 1px solid #fff;
+}
+.pixel.frozen .pearl-mark { outline: 2px solid #8ad7ed; outline-offset: 0; }
+.pixel.shell-locked { overflow: hidden; outline: 1px solid #fff4df; }
+.shell-mark {
+  position: absolute; z-index: 4; inset: 0; display: grid; place-items: center;
+  border-radius: 50% 50% 15% 15%; font: 800 10px/1 sans-serif; color: #8f695c;
+  background: repeating-conic-gradient(from -60deg at 50% 100%, #f8dcca 0deg 12deg, #e2b49e 13deg 16deg);
+  box-shadow: inset 0 1px 0 #fff9e8, inset 0 -2px 0 #c7987e;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+}
+.shell-tracker { display: flex; justify-content: center; gap: 12px; margin: 8px 0 -6px; }
+.shell-tracker>span { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #a07965; }
+.shell-tracker b { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #f4e6d9; font-size: 10px; }
+.shell-tracker .opened { color: #67977a; }
+.shell-tracker .opened b { background: #e6f1df; }
+.demo-pearl { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; color: #7c6795; font-size: 20px; font-weight: 800; background: radial-gradient(circle at 32% 25%, #fff 10%, #fff5e4 45%, #b9a1c8 90%); box-shadow: 0 4px 8px #9a7ba428; }
+.demo-shell { width: 62px; height: 52px; display: grid; place-items: center; color: #9a7057; font-size: 19px; font-weight: 800; border-radius: 50% 50% 15% 15%; background: repeating-conic-gradient(from -60deg at 50% 100%, #f5d9c7 0deg 12deg, #dfb296 13deg 16deg); box-shadow: 0 3px 0 #c79a7e; }
+.shell-intro .ice-demo { justify-content: space-evenly; }
+.shell-intro .ice-tip { background: #f6eee5; color: #a4826e; }
+.run-details { margin-top: 9px; border-top: 1px solid #edf0e7; padding-top: 8px; }
+.run-details summary { cursor: pointer; color: #7f947c; font-size: 10px; }
+.run-details summary>span { float: right; color: #a0af96; }
+.run-details>p { font-size: 9px; line-height: 1.8; color: #8b9c81; margin-top: 8px; }
+.challenge-panel { margin-top: 15px; padding: 12px; border-radius: 13px; background: #f2f5e9; text-align: left; }
+.challenge-heading { display: flex; flex-direction: column; gap: 5px; }
+.challenge-heading>b { font-size: 11px; color: #6a8566; }
+.challenge-heading>span, .challenge-panel>p { font-size: 10px; line-height: 1.7; color: #8d9e83; }
+.challenge-panel>p { margin-top: 7px; }
+.challenge-badges { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; font-size: 10px; color: #9ba68f; }
+.challenge-badges .earned { color: #568663; font-weight: 700; }
+.challenge-unlocked { font-size: 10px !important; margin-top: 10px !important; color: #a38451 !important; }
+@media(max-width:740px) {
+  .playfield.pearl-field { width: clamp(250px,31dvh,360px); }
+  .shell-tracker { margin-top: 6px; }
+  .pearl-mark { font-size: 8px; }
+  .shell-mark { font-size: 9px; }
+  .result-modal .treasure-art { width: 110px; height: 110px; margin: 20px auto; padding: 20px; }
+  .result-modal .result-stats { margin-top: 12px; }
+}

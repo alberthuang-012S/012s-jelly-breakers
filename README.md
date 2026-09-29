@@ -1,6 +1,6 @@
 # Jelly Orbit · 水母的海洋小旅行
 
-A ten-stage, mobile-first playable rebuild. Send jellyfish around a moving track, reveal matching colors, and collect ocean pixel art.
+A fifteen-stage, mobile-first playable rebuild. Send jellyfish around a moving track, reveal matching colors, and collect ocean pixel art.
 
 ## Gameplay
 
@@ -18,10 +18,15 @@ The first two stages introduce the loop. Later stages place inner colors ahead o
 
 Stages 6–10 form the Frost Sea chapter: ice introduction, frozen entrance, a lighter heart-shaped stage, twin reefs, and an aurora crystal finale. An illustrated one-time introduction explains the new mechanic. Existing five-stage saves automatically continue at stage 6.
 
+Stages 11–15 introduce the Pearl Sea: numbered pearls open matching shell groups once every pearl is removed. Closed shells block rays without spending ammo. An iced pearl must be both thawed and cleared. Shell contents still require ordinary matching hits after opening. Side entrances, a short rest stage, two independent locks and an ice/shell finale vary the pacing.
+
+After a first clear, optional replay challenges reward finishing within the displayed launch target or without hints. Every target has a verified winning route. Challenges never gate progression. Best launch count, best combo and earned badges are saved independently under `jellyOrbitRecordsV1`; existing completion saves remain unchanged. Undo restores the board but does not erase this attempt's actual launch or hint counts. A replay resets attempt counters. Old completed stages unlock challenges without inventing historic scores.
+
 ## Core Systems
 
-- `src/game/tide.ts`: immutable deterministic simulation, inward rays, ice, launch/dock rules, ten stages and local hints. Lowercase color letters define iced cubes in the hand-authored maps.
-- `src/game/tide.test.ts`: capacity, ammo conservation, simultaneous hits, ice blocking, deadlock timing, and verified sequential/interleaved winning routes for all ten stages.
+- `src/game/tide.ts`: immutable deterministic simulation, inward rays, ice, shell locks, launch/dock rules, fifteen stages and local hints. Lowercase color letters define iced cubes in the hand-authored maps.
+- `src/game/tide.test.ts`: capacity, ammo conservation, simultaneous hits, ice/shell blocking, deadlock timing, and verified sequential/interleaved winning routes for all fifteen stages.
+- `src/storage/tideRecords.ts`: validated local records and idempotent personal-best/challenge merging.
 - `src/components/TideEffects.tsx`: bounded visual effects and color-clear celebrations, with reduced-motion support.
 - `src/storage/tideProgress.ts`: backwards-compatible stage completion storage and new-mechanic tutorial memory.
 - `src/App.tsx`: interface, clock, undo snapshots, local completion storage and synthesized audio.
@@ -32,7 +37,7 @@ The previous turn-based engine, solver, levels and tests remain as reference. Th
 
 Completed stages are stored under `jellyOrbitTideV2`, without changing previous-version progress. Reloading restarts the current stage and keeps unlocks. Audio starts muted. Google Fonts is optional, with system-font fallback.
 
-This second prototype contains ten stages. Difficulty and pacing still need real-player playtesting before expanding the catalog. Accounts, monetization and daily challenges are outside this version.
+This third prototype contains fifteen stages. Difficulty and pacing still need real-player playtesting before expanding the catalog. Accounts, monetization and daily challenges are outside this version.
 
 ## Development
 

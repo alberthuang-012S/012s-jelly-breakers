@@ -6,10 +6,10 @@ import { COLOR_NAMES, HEX } from '../game/tide'
 export function TideEffects({ game, size, fast }: { game: TideState; size: number; fast: boolean }) {
   const [celebration, setCelebration] = useState<{ text: string; tick: number } | null>(null)
   const previousTick = useRef(game.tick)
-  const cleared = game.clearedColors.map(color => COLOR_NAMES[color]).join('、')
+  const cleared = game.openedShells.length ? `貝殼 ${game.openedShells.join('、')} 打開了！` : game.clearedColors.length ? `${game.clearedColors.map(color => COLOR_NAMES[color]).join('、')}全清！` : ''
   useEffect(() => {
     if (game.tick < previousTick.current) setCelebration(null)
-    else if (cleared) setCelebration({ text: `${cleared}全清！`, tick: game.tick })
+    else if (cleared) setCelebration({ text: cleared, tick: game.tick })
     previousTick.current = game.tick
   }, [cleared, game.tick])
   useEffect(() => {

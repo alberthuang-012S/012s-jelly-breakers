@@ -23,3 +23,14 @@ export function hasSeenIce(): boolean {
 export function rememberIce(): void {
   try { localStorage.setItem('jellyOrbitIceIntroV1', 'seen') } catch { /* Optional tutorial memory. */ }
 }
+export function hasSeenShell(): boolean {
+  try { return localStorage.getItem('jellyOrbitShellIntroV1') === 'seen' } catch { return false }
+}
+export function rememberShell(): void {
+  try { localStorage.setItem('jellyOrbitShellIntroV1', 'seen') } catch { /* Optional tutorial memory. */ }
+}
+export function stageTutorial(index: number): 'shell' | 'ice' | null {
+  if (index >= 10 && !hasSeenShell()) return 'shell'
+  if (index >= 5 && !hasSeenIce()) return 'ice'
+  return null
+}

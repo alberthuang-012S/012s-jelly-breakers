@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { COLORS, TIDE_LEVELS, createTide, hintMove, launch, rayTarget, stepTide } from './tide'
+import { COLORS, TIDE_LEVELS, canHit, createTide, hintMove, isLocked, launch, rayTarget, stepTide } from './tide'
 import type { TideState } from './tide'
 
 function settle(state: TideState, size: number) {
@@ -63,7 +63,7 @@ describe('Tide realtime rules', () => {
   })
 })
 
-describe('ten playable stages', () => {
+describe('fifteen playable stages', () => {
   for (const level of TIDE_LEVELS) {
     it(`stage ${level.id} supports interleaved launches without overflowing the dock`, () => {
       let state = createTide(level)
@@ -77,6 +77,7 @@ describe('ten playable stages', () => {
         expect(state.swimmers.length).toBeLessThanOrEqual(3)
       }
       expect(state.phase).toBe('won')
+      expect(state.launched, `stage ${level.id} efficient challenge`).toBeLessThanOrEqual(level.par)
     })
     it(`stage ${level.id} has balanced ammo and a verified winning route`, () => {
       expect(level.tiles).toHaveLength(level.size ** 2)
@@ -93,6 +94,46 @@ describe('ten playable stages', () => {
       expect(state.phase).toBe('won')
     })
   }
+})
+
+describe('numbered shell locks', () => {
+  it('blocks matching fire without consuming ammo and excludes locked targets from hints', () => {
+    const state = createTide(TIDE_LEVELS[10])
+    state.tiles = ['yellow', 'pink', null, null]; state.ice = [0, 0, 0, 0]
+    state.shells = [{ id: '1', pearls: [1], cells: [0] }]
+    state.swimmers = [{ id: 'test', color: 'yellow', energy: 2, age: 0 }]
+    const next = stepTide(state, 2)
+    expect(next.swimmers[0].energy).toBe(2)
+    expect(next.tiles[0]).toBe('yellow')
+    expect(canHit(next, 'yellow', 2)).toBe(false)
+    expect(next.shots).toHaveLength(0)
+  })
+  it('opens only the matching group after every pearl is cleared; cracking ice is insufficient', () => {
+    const state = createTide(TIDE_LEVELS[10])
+    state.tiles = ['yellow', 'pink', 'aqua', 'green']; state.ice = [1, 0, 0, 0]
+    state.shells = [{ id: '1', pearls: [0], cells: [1] }, { id: '2', pearls: [2], cells: [3] }]
+    state.swimmers = [{ id: 'test', color: 'yellow', energy: 2, age: 0 }]
+    const cracked = stepTide(state, 2)
+    expect(isLocked(cracked, 1)).toBe(true)
+    expect(cracked.openedShells).toEqual([])
+    const cleared = stepTide(cracked, 2)
+    expect(isLocked(cleared, 1)).toBe(false)
+    expect(isLocked(cleared, 3)).toBe(true)
+    expect(cleared.openedShells).toEqual(['1'])
+    expect(isLocked(state, 1)).toBe(true) // Undo snapshots retain their locks.
+  })
+  it('waits for all pearls and unlocks before a later swimmer in the same tick fires', () => {
+    const state = createTide(TIDE_LEVELS[10])
+    state.tiles = ['yellow', 'pink', 'yellow', null]; state.ice = [0,0,0,0]
+    state.shells = [{ id: '1', pearls: [0,2], cells: [1] }]
+    state.swimmers = [{ id: 'first', color: 'yellow', energy: 2, age: 0 }]
+    const halfway = stepTide(state, 2)
+    expect(isLocked(halfway, 1)).toBe(true)
+    halfway.swimmers = [{ id: 'first', color: 'yellow', energy: 1, age: 0 }, { id: 'second', color: 'pink', energy: 1, age: 2 }]
+    const next = stepTide(halfway, 2)
+    expect(next.phase).toBe('won')
+    expect(next.shots).toHaveLength(2)
+  })
 })
 
 describe('ice and streaks', () => {

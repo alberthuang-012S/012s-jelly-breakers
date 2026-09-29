@@ -7,9 +7,10 @@ it('preserves the existing five completions and starts at stage six', () => {
   expect(nextStageIndex(completed)).toBe(5)
 })
 it('keeps new completions, filters invalid values, and finds the first gap', () => {
-  const completed = parseTideProgress('[10,1,1,2,4,6,"3",0,11,null]')
+  const completed = parseTideProgress('[10,1,1,2,4,6,"3",0,16,null]')
   expect(completed).toEqual([1, 2, 4, 6, 10])
   expect(nextStageIndex(completed)).toBe(2)
-  expect(nextStageIndex([1,2,3,4,5,6,7,8,9,10])).toBe(9)
+  expect(nextStageIndex([1,2,3,4,5,6,7,8,9,10])).toBe(10)
+  expect(nextStageIndex(Array.from({ length: 15 }, (_, i) => i + 1))).toBe(14)
   expect(parseTideProgress('broken')).toEqual([])
 })

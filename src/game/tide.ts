@@ -4,16 +4,17 @@ export const COLORS: JellyColor[] = ['yellow', 'pink', 'aqua', 'green', 'purple'
 export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '檸檬', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
 export const HEX: Record<JellyColor, string> = { yellow: '#ffc947', pink: '#ff82ac', aqua: '#55d7e0', green: '#93d772', purple: '#b29aee' }
 export type Tile = JellyColor | null
-export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; lanes: JellyUnit[][] }
+export type ShellGroup = { id: string; pearls: number[]; cells: number[] }
+export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; shells: ShellGroup[]; lanes: JellyUnit[][]; par: number }
 export type Swimmer = JellyUnit & { age: number }
 export type Shot = { id: string; color: JellyColor; from: [number, number]; target: number; sourceId: string; tick: number; cracked: boolean }
-export type TideState = { tiles: Tile[]; ice: number[]; lanes: JellyUnit[][]; pool: JellyUnit[]; swimmers: Swimmer[]; tick: number; shots: Shot[]; effects: Shot[]; combo: number; bestCombo: number; lastHitTick: number; clearedColors: JellyColor[]; phase: 'playing' | 'won' | 'lost'; launched: number }
+export type TideState = { tiles: Tile[]; ice: number[]; shells: ShellGroup[]; openedShells: string[]; lanes: JellyUnit[][]; pool: JellyUnit[]; swimmers: Swimmer[]; tick: number; shots: Shot[]; effects: Shot[]; combo: number; bestCombo: number; lastHitTick: number; clearedColors: JellyColor[]; phase: 'playing' | 'won' | 'lost'; launched: number }
 export const CAPACITY = 3
 export const POOL_SIZE = 5
 export const TICK_MS = 75
 
 const charColor: Record<string, JellyColor> = { Y: 'yellow', P: 'pink', A: 'aqua', G: 'green', U: 'purple' }
-function level(id: number, name: string, subtitle: string, icon: string, rows: string[], order: JellyColor[]): TideLevel {
+function level(id: number, name: string, subtitle: string, icon: string, rows: string[], order: JellyColor[], shells: ShellGroup[] = []): TideLevel {
   if (rows.some(row => row.length !== rows.length || /[^YPAGUypagu.]/.test(row))) throw new Error(`Invalid stage ${id}`)
   const characters = rows.join('').split('')
   const tiles = characters.map(c => charColor[c.toUpperCase()] ?? null)
@@ -32,7 +33,10 @@ function level(id: number, name: string, subtitle: string, icon: string, rows: s
   // Players can keep another lane moving or spend a dock to uncover it.
   if (id >= 3 && lanes[1].length > 1) [lanes[1][0], lanes[1][1]] = [lanes[1][1], lanes[1][0]]
   if (id >= 5 && lanes[2].length > 1) [lanes[2][0], lanes[2][1]] = [lanes[2][1], lanes[2][0]]
-  return { id, name, subtitle, icon, size: rows.length, tiles, ice, lanes }
+  for (const shell of shells) {
+    if (!shell.pearls.length || !shell.cells.length || [...shell.pearls, ...shell.cells].some(i => !tiles[i]) || shell.pearls.some(i => shells.some(g => g.cells.includes(i)))) throw new Error(`Invalid shell in stage ${id}`)
+  }
+  return { id, name, subtitle, icon, size: rows.length, tiles, ice, shells, lanes, par: lanes.flat().length + Math.ceil(rows.length / 2) }
 }
 
 export const TIDE_LEVELS = [
@@ -66,10 +70,31 @@ export const TIDE_LEVELS = [
   level(10, '極光水晶', '破冰、返航、再出發。把整片極光帶回家。', '✧', [
     '....YyyY....', '...YPPPPY...', '..YPAAAAPY..', '.YPAggggAPY.', 'YPAGUUUUGAPY', 'yPaGUuuUGaPy', 'yPaGUuuUGaPy', 'YPAGUUUUGAPY', '.YPAggggAPY.', '..YPAAAAPY..', '...YPPPPY...', '....YyyY....',
   ], ['yellow', 'pink', 'aqua', 'green', 'purple']),
+  level(11, '珍珠來信', '先消除標記 1 的珍珠，打開同號貝殼。', '◉', [
+    '..YYYY..', '.YPPPPY.', 'YPP..PPY', 'YPAAAA.Y', 'YPAAAA.Y', 'YPP..PPY', '.YPPPPY.', '..YYYY..',
+  ], ['yellow', 'pink', 'aqua'], [{ id: '1', pearls: [2, 5], cells: [27, 28, 35, 36] }]),
+  level(12, '側灣捷徑', '從右側缺口切入，先找到藏在蜜桃色塊上的珍珠。', '⌁', [
+    '..YYYYYY..', '.YPPPPPPY.', 'YPAAAAAAPY', 'YPAGGGGAPY', 'YPAUUUUA..', 'YPAUUUUA..', 'YPAGGGGAPY', 'YPAAAAAAPY', '.YPPPPPPY.', '..YYYYYY..',
+  ], ['yellow', 'pink', 'aqua', 'green', 'purple'], [{ id: '1', pearls: [17, 87], cells: [44, 45, 54, 55] }]),
+  level(13, '午後拾貝', '小小休息站：少派幾次，也能把珍珠帶回家。', '◡', [
+    '........', '..YYYY..', '.YPPPPY.', 'YPAAAAPY', 'YPAAAAPY', '.YPPPPY.', '..YYYY..', '........',
+  ], ['yellow', 'pink', 'aqua'], [{ id: '1', pearls: [10], cells: [27, 28, 35, 36] }]),
+  level(14, '雙鎖潮汐', '兩組珍珠各開一扇門，觀察 1 與 2 的標記。', '◈', [
+    '.YYY..YYY.', 'YPPPYYPPPY', 'YPAPYYPAPY', 'YPAPYYPAPY', '.YPY..YPY.', '.YPY..YPY.', 'YPGPYYPUPY', 'YPGPYYPUPY', 'YPPPYYPPPY', '.YYY..YYY.',
+  ], ['yellow', 'pink', 'aqua', 'green', 'purple'], [{ id: '1', pearls: [1, 12], cells: [22, 32, 62, 72] }, { id: '2', pearls: [8, 17], cells: [27, 37, 67, 77] }]),
+  level(15, '冰海寶藏', '冰裡的珍珠要兩次命中，貝殼打開後仍要留意冰層。', '✧', [
+    '....YyyY....', '...YPPPPY...', '..YPAAAAPY..', '.YPAggggAPY.', 'YPAGUUUUGAPY', 'yPaGUuuUGaPy', 'yPaGUuuUGaPy', 'YPAGUUUUGAPY', '.YPAggggAPY.', '..YPAAAAPY..', '...YPPPPY...', '....YyyY....',
+  ], ['yellow', 'pink', 'aqua', 'green', 'purple'], [{ id: '1', pearls: [5, 6], cells: [64, 65, 66, 67, 76, 77, 78, 79] }]),
 ]
 
 export function createTide(level: TideLevel): TideState {
-  return { tiles: [...level.tiles], ice: [...level.ice], lanes: level.lanes.map(l => l.map(j => ({ ...j }))), pool: [], swimmers: [], tick: 0, shots: [], effects: [], combo: 0, bestCombo: 0, lastHitTick: -100, clearedColors: [], phase: 'playing', launched: 0 }
+  return { tiles: [...level.tiles], ice: [...level.ice], shells: level.shells.map(g => ({ ...g, pearls: [...g.pearls], cells: [...g.cells] })), openedShells: [], lanes: level.lanes.map(l => l.map(j => ({ ...j }))), pool: [], swimmers: [], tick: 0, shots: [], effects: [], combo: 0, bestCombo: 0, lastHitTick: -100, clearedColors: [], phase: 'playing', launched: 0 }
+}
+export function isShellClosed(state: Pick<TideState, 'tiles'>, group: ShellGroup): boolean {
+  return group.pearls.some(i => state.tiles[i] !== null)
+}
+export function isLocked(state: Pick<TideState, 'tiles' | 'shells'>, index: number): boolean {
+  return state.shells.some(group => group.cells.includes(index) && isShellClosed(state, group))
 }
 export function orbitPoint(age: number, size: number): [number, number] {
   const progress = Math.max(0, Math.min(age / (size * 8), .99999)) * 4
@@ -90,7 +115,7 @@ export function rayTarget(tiles: Tile[], size: number, side: number, line: numbe
 export function canHit(state: TideState, color: JellyColor, size: number): boolean {
   for (let side = 0; side < 4; side++) for (let line = 0; line < size; line++) {
     const target = rayTarget(state.tiles, size, side, line)
-    if (target !== null && state.tiles[target] === color) return true
+    if (target !== null && state.tiles[target] === color && !isLocked(state, target)) return true
   }
   return false
 }
@@ -110,13 +135,13 @@ export function launch(state: TideState, source: 'lane' | 'pool', index: number)
 }
 export function stepTide(state: TideState, size: number): TideState {
   if (state.phase !== 'playing') return state
-  const next: TideState = { ...state, tiles: [...state.tiles], ice: [...state.ice], pool: [...state.pool], swimmers: [], tick: state.tick + 1, shots: [], effects: state.effects.filter(shot => state.tick - shot.tick < 7), clearedColors: [] }
+  const next: TideState = { ...state, tiles: [...state.tiles], ice: [...state.ice], pool: [...state.pool], swimmers: [], tick: state.tick + 1, shots: [], effects: state.effects.filter(shot => state.tick - shot.tick < 7), clearedColors: [], openedShells: [] }
   for (const original of state.swimmers) {
     const jelly = { ...original }
     if (jelly.age < 0) { next.swimmers.push({ ...jelly, age: jelly.age + 1 }); continue }
     const ray = Math.floor(jelly.age / 2)
     const target = rayTarget(next.tiles, size, Math.floor(ray / size), ray % size)
-    if (target !== null && next.tiles[target] === jelly.color) {
+    if (target !== null && next.tiles[target] === jelly.color && !isLocked(next, target)) {
       const cracked = next.ice[target] > 0
       if (cracked) next.ice[target]--
       else next.tiles[target] = null
@@ -133,6 +158,7 @@ export function stepTide(state: TideState, size: number): TideState {
     else next.swimmers.push(jelly)
   }
   next.effects.push(...next.shots)
+  next.openedShells = state.shells.filter(group => isShellClosed(state, group) && !isShellClosed(next, group)).map(group => group.id)
   if (next.tick - next.lastHitTick > 12) next.combo = 0
   if (next.tiles.every(t => t === null)) next.phase = 'won'
   else if (!next.swimmers.length) {
