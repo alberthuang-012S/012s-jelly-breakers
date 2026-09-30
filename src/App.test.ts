@@ -76,21 +76,20 @@ it('records a normal win under its own ID and continues within that difficulty',
   expect(host.querySelector('.level-bar')!.textContent).toContain('普通 · 第 02 關')
   expect(host.querySelectorAll('.dock-slot.occupied')).toHaveLength(0)
 })
-it('shows reserved return slots and pauses while inspecting the board or the full queue', async () => {
+it('shows reserved return slots and keeps the board in play and pauses while inspecting the full queue', async () => {
   localStorage.setItem('jellyOrbitDifficultyV1', 'hard')
   await act(() => root.render(createElement(App)))
   await click('.lane:nth-child(1) .launch-button')
   expect(host.querySelector('.dock-capacity')!.textContent).toBe('停泊 0 · 返航預留 1 · 可用 3')
-  await click('.board-tools button')
-  expect(host.querySelector('.enlarged-board')).not.toBeNull()
-  const before = host.querySelector('.dock-capacity')!.textContent
-  await act(() => vi.advanceTimersByTime(20000))
-  expect(host.querySelector('.dock-capacity')!.textContent).toBe(before)
-  await click('.modal-close')
+  expect(host.textContent).not.toContain('放大棋盤')
+  expect(host.querySelectorAll('.pixel-board')).toHaveLength(1)
   await click('.queue-preview-button')
   expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes[0].length - 1)
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('隊首')
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('發泡泡')
+  const before = host.querySelector('.dock-capacity')!.textContent
+  await act(() => vi.advanceTimersByTime(20000))
+  expect(host.querySelector('.dock-capacity')!.textContent).toBe(before)
   await click('.modal-close')
   await act(() => vi.advanceTimersByTime(20000))
   expect(host.querySelector('.dock-capacity')!.textContent).toBe('停泊 1 · 返航預留 0 · 可用 3')
