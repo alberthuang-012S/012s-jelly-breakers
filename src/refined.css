@@ -207,3 +207,26 @@ button.ice-counter[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #568f80; }
   .main-layout { padding-left: 8px; padding-right: 8px; }
   .game-shell { padding-left: 6px; padding-right: 6px; }
 }
+
+/* Berths stay the same size for empty, reserved, and parked partners. */
+.ocean-app .dock { padding: 12px 8px; background: #f0f5ef; }
+.dock .dock-available { color: #416d61; font-size: 12px; font-weight: 500; }
+.dock-available b { font-size: 20px; font-variant-numeric: tabular-nums; margin: 0 2px; }
+.ocean-app .dock .dock-capacity { margin-top: 2px; text-align: right; font-size: 12px; color: #637d77; }
+.ocean-app .dock-slots { gap: 6px; margin-top: 12px; }
+.ocean-app .dock-slot { height: 88px; min-width: 0; flex-direction: column; gap: 6px; padding: 7px 0; border-radius: 12px; }
+.ocean-app .dock-slot .jelly-art { width: 42px; height: 42px; max-width: 100%; flex-shrink: 0; }
+.ocean-app .dock-slot .jelly-art b { min-width: 21px; height: 21px; font-size: 12px; right: 0; bottom: -1px; }
+.ocean-app .dock .dock-slot .dock-slot-label { color: #637d77; font-size: 10px; line-height: 16px; white-space: nowrap; }
+.ocean-app .dock-slot.reserved .jelly-art { opacity: .5; }
+.ocean-app .dock-slot.reserved .jelly-art b { visibility: hidden; }
+.ocean-app .dock-slot.reserved { border: 1px dashed #9db7a6; background: #eaf2ed; }
+.ocean-app .dock-slot.empty { border: 1px solid #dce6d9; background: #e8efe6; }
+.ocean-app .dock-slot .dock-berth { width: 28px; height: 26px; margin: 8px 0; border: 2px solid #becfbc; border-top: 0; border-radius: 0 0 10px 10px; }
+.ocean-app .dock-slot.dock-ready { border: 2px solid #68947d; background: #fffefa; }
+.ocean-app .dock .dock-slot.dock-ready .dock-slot-label { color: #416d61; font-weight: 600; }
+.ocean-app .dock-slot.occupied:hover:not(:disabled) { background: #e7f2e9; }
+.ocean-app .dock-slot.occupied:focus-visible { outline: 3px solid #416d61; outline-offset: 2px; }
+.ocean-app .dock-slot.occupied:disabled { opacity: .65; }
+.ocean-app .dock-full { border-color: #d5bea0; }
+.ocean-app .dock .dock-full-message { margin-top: 10px; text-align: left; color: #876831; font-size: 12px; }

@@ -63,7 +63,7 @@ it('records a normal win under its own ID and continues within that difficulty',
   for (const id of level.solution!) {
     const pool = model.pool.findIndex(j => j.id === id)
     const lane = model.lanes.findIndex(l => l[0]?.id === id)
-    await click(pool >= 0 ? `.dock-slot.occupied:nth-child(${pool + 1})` : `.lane:nth-child(${lane + 1}) .launch-button`)
+    await click(pool >= 0 ? `.dock-slot.occupied[data-jelly-id="${id}"]` : `.lane:nth-child(${lane + 1}) .launch-button`)
     model = launch(model, pool >= 0 ? 'pool' : 'lane', pool >= 0 ? pool : lane)
     while (model.swimmers.length && model.phase === 'playing') model = stepTide(model, level.size)
     await act(() => vi.advanceTimersByTime((level.size * 8 + 16) * TICK_MS))
@@ -80,7 +80,13 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   localStorage.setItem('jellyOrbitDifficultyV1', 'hard')
   await act(() => root.render(createElement(App)))
   await click('.lane:nth-child(1) .launch-button')
-  expect(host.querySelector('.dock-capacity')!.textContent).toBe('停泊 0 · 返航預留 1 · 可用 3')
+  expect(host.querySelector('.dock-capacity')!.textContent).toBe('返航中 1 · 已停泊 0')
+  expect(host.querySelector('.dock-available')!.textContent).toBe('可用 3 格')
+  const reserved = host.querySelector('.dock-slot.reserved')!
+  const berth = [...host.querySelectorAll('.dock-slot')].indexOf(reserved)
+  const partner = reserved.getAttribute('data-jelly-id')
+  expect(reserved.querySelector('img')).not.toBeNull()
+  expect(reserved.textContent).toContain('返航中')
   expect(host.textContent).not.toContain('放大棋盤')
   expect(host.querySelectorAll('.pixel-board')).toHaveLength(1)
   await click('.queue-preview-button')
@@ -92,7 +98,12 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   expect(host.querySelector('.dock-capacity')!.textContent).toBe(before)
   await click('.modal-close')
   await act(() => vi.advanceTimersByTime(20000))
-  expect(host.querySelector('.dock-capacity')!.textContent).toBe('停泊 1 · 返航預留 0 · 可用 3')
+  expect(host.querySelector('.dock-capacity')!.textContent).toBe('返航中 0 · 已停泊 1')
+  const parked = host.querySelectorAll('.dock-slot')[berth]
+  expect(parked.classList.contains('occupied')).toBe(true)
+  expect(parked.getAttribute('data-jelly-id')).toBe(partner)
+  await click(`.dock-slot.occupied[data-jelly-id="${partner}"]`)
+  expect(host.querySelectorAll('.dock-slot')[berth].classList.contains('reserved')).toBe(true)
 })
 it('continues the current attempt from a compact chapter picker without resetting it', async () => {
   await act(() => root.render(createElement(App)))
@@ -102,7 +113,7 @@ it('continues the current attempt from a compact chapter picker without resettin
   expect(host.querySelector('.continue-journey')!.textContent).toContain('第 01 關')
   await click('.continue-journey')
   expect(host.querySelector('[role="dialog"]')).toBeNull()
-  expect(host.querySelector('.dock-capacity')!.textContent).toContain('返航預留 1')
+  expect(host.querySelector('.dock-capacity')!.textContent).toContain('返航中 1')
 })
 it('removes hints from controls and shows no-undo challenges without automatic legacy awards', async () => {
   localStorage.setItem(TIDE_SAVE_KEY, '[1]')
