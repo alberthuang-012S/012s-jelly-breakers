@@ -1,5 +1,5 @@
-export type RunStats = { launches: number; hints: number; undos: number }
-export type StageRecord = { bestLaunches: number; bestCombo: number; noHint: boolean; efficient: boolean }
+export type RunStats = { launches: number; undos: number }
+export type StageRecord = { bestLaunches: number; bestCombo: number; noUndo: boolean; efficient: boolean; noHint?: boolean }
 export type TideRecords = Record<number, StageRecord>
 const KEY = 'jellyOrbitRecordsV1'
 export function parseRecords(raw: string | null): TideRecords {
@@ -11,7 +11,12 @@ export function parseRecords(raw: string | null): TideRecords {
       if (!/^\d+$/.test(key) || Number(key) < 1 || !item || typeof item !== 'object') continue
       const record = item as StageRecord
       if (!Number.isSafeInteger(record.bestLaunches) || record.bestLaunches < 1 || !Number.isSafeInteger(record.bestCombo) || record.bestCombo < 0) continue
-      result[Number(key)] = { bestLaunches: record.bestLaunches, bestCombo: record.bestCombo, noHint: record.noHint === true, efficient: record.efficient === true }
+      result[Number(key)] = {
+        bestLaunches: record.bestLaunches, bestCombo: record.bestCombo,
+        noUndo: record.noUndo === true, efficient: record.efficient === true,
+        // Keep historic no-hint badges, but never reinterpret them as no-undo wins.
+        ...(typeof record.noHint === 'boolean' ? { noHint: record.noHint } : {}),
+      }
     }
     return result
   } catch { return {} }
@@ -28,7 +33,8 @@ export function recordWin(records: TideRecords, stageId: number, run: RunStats, 
   return { ...records, [stageId]: {
     bestLaunches: Math.min(old?.bestLaunches ?? Infinity, run.launches),
     bestCombo: Math.max(old?.bestCombo ?? 0, combo),
-    noHint: Boolean(old?.noHint || (challengeUnlocked && run.hints === 0)),
+    noUndo: Boolean(old?.noUndo || (challengeUnlocked && run.undos === 0)),
     efficient: Boolean(old?.efficient || (challengeUnlocked && run.launches <= par)),
+    ...(typeof old?.noHint === 'boolean' ? { noHint: old.noHint } : {}),
   } }
 }

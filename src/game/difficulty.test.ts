@@ -81,4 +81,21 @@ describe('three independent hundred-stage journeys', () => {
     state.pool.push({ id: 'p3', color: 'purple', energy: 1 })
     expect(launch(state, 'pool', 0).pool).toHaveLength(3)
   })
+  it('introduces hard-mode mechanics in stages while keeping four return slots', () => {
+    const hard = levelsFor('hard')
+    for (const level of hard.slice(0, 3)) {
+      expect(level.poolSize).toBe(4)
+      expect(level.size).toBe(10)
+      expect(level.ice.some(Boolean)).toBe(false)
+      expect(level.shells).toHaveLength(0)
+      expect(new Set(level.tiles.filter(Boolean)).size).toBeLessThanOrEqual(4)
+    }
+    for (const level of hard.slice(3, 6)) {
+      expect(level.ice.some(Boolean)).toBe(true)
+      expect(level.shells).toHaveLength(0)
+    }
+    for (const level of hard.slice(6, 10)) expect(level.shells).toHaveLength(1)
+    expect(hard[10].size).toBe(14)
+    expect(hard[10].shells).toHaveLength(2)
+  })
 })

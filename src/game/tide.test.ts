@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { COLORS, TIDE_LEVELS, canHit, createTide, hintMove, isLocked, launch, rayTarget, stepTide } from './tide'
+import { COLORS, TIDE_LEVELS, canHit, createTide, routeCandidate, isLocked, launch, rayTarget, stepTide } from './tide'
 import type { TideState } from './tide'
 
 function settle(state: TideState, size: number) {
@@ -82,7 +82,7 @@ describe('one hundred playable stages', () => {
       let state = createTide(level)
       for (let tick = 0; tick < 6000 && state.phase === 'playing'; tick++) {
         if (tick % 6 === 0) {
-          const choice = hintMove(state, level.size)
+          const choice = routeCandidate(state, level.size)
           if (choice) state = launch(state, choice.source, choice.index)
         }
         state = stepTide(state, level.size)
@@ -98,7 +98,7 @@ describe('one hundred playable stages', () => {
       for (const color of COLORS) expect(level.lanes.flat().filter(j => j.color === color).reduce((sum, j) => sum + j.energy, 0)).toBe(level.tiles.reduce((sum, tile, i) => sum + (tile === color ? 1 + level.ice[i] : 0), 0))
       let state = createTide(level)
       for (let move = 0; move < 200 && state.phase === 'playing'; move++) {
-        const choice = hintMove(state, level.size)
+        const choice = routeCandidate(state, level.size)
         expect(choice, `stage ${level.id}, move ${move}, ${state.tiles.filter(Boolean).length} tiles left`).not.toBeNull()
         if (!choice) break
         state = settle(launch(state, choice.source, choice.index), level.size)
@@ -189,7 +189,7 @@ describe('ice and streaks', () => {
   it('conserves ammo against remaining tiles plus ice during concurrent play', () => {
     let state = createTide(TIDE_LEVELS[9])
     for (let tick = 0; tick < 4000 && state.phase === 'playing'; tick++) {
-      const move = hintMove(state, 12)
+      const move = routeCandidate(state, 12)
       if (move && tick % 5 === 0) state = launch(state, move.source, move.index)
       const next = stepTide(state, 12)
       expect(energy(next)).toBe(next.tiles.filter(Boolean).length + next.ice.reduce((sum, n) => sum + n, 0))

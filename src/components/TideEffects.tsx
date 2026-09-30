@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { TideState } from '../game/tide'
 import { COLOR_NAMES, HEX } from '../game/tide'
+import { BOARD_INSET, BOARD_SPAN } from './TideBoard'
 
 export function TideEffects({ game, size, fast }: { game: TideState; size: number; fast: boolean }) {
   const [celebration, setCelebration] = useState<{ text: string; tick: number } | null>(null)
@@ -21,8 +22,8 @@ export function TideEffects({ game, size, fast }: { game: TideState; size: numbe
   return <>
     <svg className="shot-svg bubble-effects" viewBox="0 0 100 100" aria-hidden="true">
       {game.effects.map(shot => {
-        const x = 25 + ((shot.target % size) + .5) * 50 / size
-        const y = 25 + (Math.floor(shot.target / size) + .5) * 50 / size
+        const x = BOARD_INSET + ((shot.target % size) + .5) * BOARD_SPAN / size
+        const y = BOARD_INSET + (Math.floor(shot.target / size) + .5) * BOARD_SPAN / size
         const style = { '--dx': `${shot.from[0] - x}px`, '--dy': `${shot.from[1] - y}px`, '--flight': fast ? '65ms' : '130ms', '--effect': fast ? '170ms' : '340ms', '--burst': shot.cracked ? '#d7faff' : HEX[shot.color] } as CSSProperties
         return <g key={shot.id} style={style}>
           <circle className="flying-bubble" cx={x} cy={y} r="1.3" fill={HEX[shot.color]} stroke="white" strokeWidth=".45" />

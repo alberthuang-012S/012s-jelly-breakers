@@ -210,7 +210,8 @@ export function stepTide(state: TideState, size: number): TideState {
   return next
 }
 
-export function hintMove(state: TideState, size: number): { source: 'lane' | 'pool'; index: number } | null {
+// A local ordering strategy used by catalogue validation, not a player feature.
+export function routeCandidate(state: TideState, size: number): { source: 'lane' | 'pool'; index: number } | null {
   const pool = state.pool.findIndex(j => canHit(state, j.color, size))
   if (pool >= 0) return { source: 'pool', index: pool }
   const lane = state.lanes.findIndex(l => l[0] && canHit(state, l[0].color, size))

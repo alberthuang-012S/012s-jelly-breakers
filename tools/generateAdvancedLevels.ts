@@ -14,7 +14,7 @@ function makeBoard(difficulty: Difficulty, number: number): TideLevel {
   const hard = difficulty === 'hard', chapter = Math.floor((number - 1) / 10), position = (number - 1) % 10
   // Chapter finales combine mechanics; positions 4 and 8 provide breathing room.
   const calm = position === 3 || position === 7
-  const size = hard ? 14 : 12, id = (hard ? 200 : 100) + number
+  const size = hard ? number <= 3 ? 10 : number <= 10 ? 12 : 14 : 12, id = (hard ? 200 : 100) + number
   const palette = COLORS.map((_, i) => COLORS[(i + chapter + position) % 5])
   const tiles: TideLevel['tiles'] = [], ice: number[] = [], depths: number[] = []
   for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
@@ -31,10 +31,12 @@ function makeBoard(difficulty: Difficulty, number: number): TideLevel {
     depths.push(depth)
     // Later chapters weave different colors into the middle bands, changing entrances.
     const weave = chapter >= 2 && depth === 2 && (row + col + position) % (hard ? 3 : 5) === 0
-    tiles.push(depth < 0 ? null : palette[weave ? 3 : depth])
-    ice.push(depth >= 0 && (hard || chapter >= 2) && (row * 3 + col + number) % (calm ? 9 : hard ? 4 : 7) === 0 ? 1 : 0)
+    tiles.push(depth < 0 ? null : palette[hard && number <= 3 && depth === 4 ? 3 : weave ? 3 : depth])
+    const iceEnabled = hard ? number >= 4 : chapter >= 2
+    const iceSpacing = hard && number <= 10 ? 9 : calm ? 9 : hard ? 4 : 7
+    ice.push(depth >= 0 && iceEnabled && (row * 3 + col + number) % iceSpacing === 0 ? 1 : 0)
   }
-  const groupCount = hard ? (calm ? 2 : chapter >= 4 ? 3 : 2) : chapter < 2 ? 0 : chapter < 6 || calm ? 1 : 2
+  const groupCount = hard ? number <= 6 ? 0 : number <= 10 ? 1 : (calm ? 2 : chapter >= 4 ? 3 : 2) : chapter < 2 ? 0 : chapter < 6 || calm ? 1 : 2
   const shells: TideLevel['shells'] = []
   for (let group = 0; group < groupCount; group++) {
     const keys = depths.flatMap((depth, index) => depth === group + 1 ? [index] : [])
@@ -69,7 +71,7 @@ function author(level: TideLevel): TideLevel {
   if (state.phase !== 'won') throw new Error(`Unfinished board ${level.id}`)
   const initial = createTide(level)
   const hidden = units.filter(j => !canHit(initial, j.color, level.size))
-  const forcedCount = hard && !calm ? 2 : 1
+  const forcedCount = hard && number > 3 && !calm ? 2 : 1
   if (hidden.length < level.poolSize!) throw new Error(`Insufficient planning choices ${level.id}`)
   // One lane offers initially blocked inner colors. Overfilling it is a real losing route.
   // The other two carry the reference order; selected inner units need temporary docks.
