@@ -6,7 +6,7 @@ export type BoardFocus = 'all' | 'ice' | `shell-${string}`
 export const BOARD_INSET = 14
 export const BOARD_SPAN = 72
 // Expand only the rendered orbit; the simulation keeps its existing coordinates.
-export const displayOrbit = (position: number) => 50 + (position - 50) * 7 / 6
+export const displayOrbit = (position: number) => 50 + (position - 50) * 23 / 18
 export function TideBoard({ game, size, focus = 'all' }: { game: TideState; size: number; focus?: BoardFocus }) {
   const selected = focus.startsWith('shell-') ? game.shells.find(g => `shell-${g.id}` === focus) : undefined
   return <div className="pixel-board" style={{ left: `${BOARD_INSET}%`, top: `${BOARD_INSET}%`, width: `${BOARD_SPAN}%`, height: `${BOARD_SPAN}%`, gridTemplateColumns: `repeat(${size}, 1fr)` }} role="img" aria-label={`${size} × ${size} 色塊圖案，剩下 ${game.tiles.filter(Boolean).length} 格`}>

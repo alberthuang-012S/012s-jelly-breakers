@@ -194,9 +194,15 @@ button.ice-counter[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #568f80; }
 }
 
 /* Give the live board the space previously reserved around the orbit. */
-.orbit-svg { transform: scale(calc(7 / 6)); transform-origin: center; }
+.orbit-svg { transform: scale(calc(23 / 18)); transform-origin: center; }
 .track-flag { display: none; }
-.swimmer .jelly-art { width: 40px; height: 40px; }
+.swimmer .jelly-art { width: 56px; height: 56px; }
+.swimmer .jelly-art.small b { min-width: 24px; height: 24px; font-size: 13px; }
+.ocean-app .playfield { margin-bottom: 32px; }
+.orbit-status { bottom: -26px; }
+@media(max-width:360px) {
+  .swimmer .jelly-art { width: 48px; height: 48px; }
+}
 @media(max-width:740px) {
   .main-layout { padding-left: 8px; padding-right: 8px; }
   .game-shell { padding-left: 6px; padding-right: 6px; }
