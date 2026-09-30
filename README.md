@@ -57,6 +57,8 @@ All three hundred stages pass automated route checks, but actual difficulty and 
 
 ## Development
 
+Use Node.js 24 or newer. `.nvmrc` pins the local and GitHub Actions runtime to Node 24; the current jsdom/undici test dependencies do not support the old Node 20 deployment environment.
+
 ```bash
 pnpm install
 pnpm dev
