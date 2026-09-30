@@ -63,7 +63,20 @@ describe('Tide realtime rules', () => {
   })
 })
 
-describe('fifteen playable stages', () => {
+describe('one hundred playable stages', () => {
+  it('has exactly one hundred sequential, named stages', () => {
+    expect(TIDE_LEVELS).toHaveLength(100)
+    expect(TIDE_LEVELS.map(level => level.id)).toEqual(Array.from({ length: 100 }, (_, index) => index + 1))
+    expect(new Set(TIDE_LEVELS.map(level => level.name)).size).toBe(100)
+    expect(new Set(TIDE_LEVELS.map(level => JSON.stringify([level.tiles, level.ice, level.shells]))).size).toBe(100)
+  })
+  it('keeps the opening twenty stages gentle', () => {
+    for (const level of TIDE_LEVELS.slice(0, 20)) {
+      expect(new Set(level.tiles.filter(Boolean)).size, `stage ${level.id} palette`).toBeLessThanOrEqual(4)
+      expect(level.shells.length, `stage ${level.id} shell groups`).toBeLessThanOrEqual(1)
+    }
+    expect(TIDE_LEVELS[14].ice.every(layer => layer === 0)).toBe(true)
+  })
   for (const level of TIDE_LEVELS) {
     it(`stage ${level.id} supports interleaved launches without overflowing the dock`, () => {
       let state = createTide(level)

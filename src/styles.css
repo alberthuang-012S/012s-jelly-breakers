@@ -310,6 +310,46 @@ img{
   stroke-linecap:round;
   stroke-linejoin:round
 }
+.track-flag{
+  filter:drop-shadow(0 .45px .7px #5874624d)
+}
+.track-flag-shadow{
+  fill:#6e978344
+}
+.track-flag-pole{
+  fill:none;
+  stroke:#5b927a;
+  stroke-width:1.05;
+  stroke-linecap:round
+}
+.track-flag-finial{
+  fill:#ffe3a8;
+  stroke:#fffdf1;
+  stroke-width:.45
+}
+.track-flag-cloth{
+  fill:url(#orbit-flag-fabric);
+  stroke:#fff8ec;
+  stroke-width:.5;
+  stroke-linejoin:round
+}
+.track-flag-fold{
+  fill:none;
+  stroke:#fff5dc;
+  stroke-width:.35;
+  stroke-linecap:round;
+  opacity:.75
+}
+.track-flag-sparkle{
+  fill:#fffaf0;
+  opacity:.95
+}
+.track-flag-base{
+  fill:#68a889;
+  stroke:#fffdf3;
+  stroke-width:.55
+}
+.track-flag-base-inner{fill:#d4ebdb}
 .pixel-board{
   position:absolute;
   left:25%;
@@ -699,6 +739,39 @@ img{
   margin-top:11px;
   line-height:1.7
 }
+.chapter-nav{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  margin-top:20px
+}
+.chapter-nav button{
+  min-width:0;
+  padding:8px 6px;
+  border:1px solid #e2eadd;
+  border-radius:10px;
+  background:#ffffffa6;
+  color:#819a89;
+  font-size:9px;
+  text-align:center;
+  cursor:pointer
+}
+.chapter-nav button.selected{
+  border-color:#9fc7ad;
+  background:#eaf4eb;
+  color:#487962;
+  font-weight:700
+}
+.chapter-nav small{
+  display:block;
+  margin-bottom:3px;
+  color:#9aafa1;
+  font-size:8px
+}
+.chapter-nav button:focus-visible{
+  outline:2px solid #61a782;
+  outline-offset:2px
+}
 .collection-list{
   display:flex;
   flex-direction:column;
@@ -918,6 +991,10 @@ img{
   gap:10px;
   margin-top:25px
 }
+.map-list .chapter-nav{
+  margin:0 0 8px;
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
 .map-list button{
   display:flex;
   align-items:center;
@@ -926,6 +1003,15 @@ img{
   background:#f2f4e9;
   border-radius:12px;
   text-align:left
+}
+.map-list .chapter-nav button{
+  display:block;
+  padding:8px 6px;
+  background:#ffffffa6;
+  text-align:center
+}
+.map-list .chapter-nav button.selected{
+  background:#eaf4eb
 }
 .map-list button:disabled{
   opacity:.4

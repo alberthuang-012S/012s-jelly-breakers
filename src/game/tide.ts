@@ -1,4 +1,5 @@
 import type { JellyColor, JellyUnit } from './types'
+import { buildCampaignLevels, makeLanes } from './campaign'
 
 export const COLORS: JellyColor[] = ['yellow', 'pink', 'aqua', 'green', 'purple']
 export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '檸檬', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
@@ -24,7 +25,9 @@ function level(id: number, name: string, subtitle: string, icon: string, rows: s
   for (const color of order) {
     let count = tiles.reduce((sum, tile, i) => sum + (tile === color ? 1 + ice[i] : 0), 0)
     while (count > 0) {
-      const energy = Math.min(count, id === 1 ? 8 : id >= 6 ? [6, 10, 8][index % 3] : 10)
+      // The opening journey has fewer swimmers to juggle. Later chapters
+      // gradually return to smaller units and more dock decisions.
+      const energy = Math.min(count, id === 1 ? 8 : 16)
       lanes[index % 3].push({ id: `${id}-${index++}`, color, energy })
       count -= energy
     }
@@ -39,7 +42,7 @@ function level(id: number, name: string, subtitle: string, icon: string, rows: s
   return { id, name, subtitle, icon, size: rows.length, tiles, ice, shells, lanes, par: lanes.flat().length + Math.ceil(rows.length / 2) }
 }
 
-export const TIDE_LEVELS = [
+const ORIGINAL_LEVELS = [
   level(1, '初見珊瑚', '點一隻水母，讓色彩流動起來。', '✿', [
     '..YYYY..', '.YYPPYY.', 'YYPPPPYY', 'YPPAAPPY', 'YPPAAPPY', 'YYPPPPYY', '.YYPPYY.', '..YYYY..',
   ], ['yellow', 'pink', 'aqua']),
@@ -86,6 +89,35 @@ export const TIDE_LEVELS = [
     '....YyyY....', '...YPPPPY...', '..YPAAAAPY..', '.YPAggggAPY.', 'YPAGUUUUGAPY', 'yPaGUuuUGaPy', 'yPaGUuuUGaPy', 'YPAGUUUUGAPY', '.YPAggggAPY.', '..YPAAAAPY..', '...YPPPPY...', '....YyyY....',
   ], ['yellow', 'pink', 'aqua', 'green', 'purple'], [{ id: '1', pearls: [5, 6], cells: [64, 65, 66, 67, 76, 77, 78, 79] }]),
 ]
+
+const OPENING_REMAP: Record<number, Partial<Record<JellyColor, JellyColor>>> = {
+  4: { green: 'aqua', purple: 'aqua' },
+  5: { purple: 'green' },
+  7: { purple: 'green' },
+  9: { purple: 'green' },
+  10: { green: 'aqua', purple: 'pink' },
+  12: { green: 'aqua', purple: 'pink' },
+  14: { green: 'aqua', purple: 'pink' },
+  15: { green: 'aqua', purple: 'pink' },
+}
+
+function easeOpeningLevel(original: TideLevel): TideLevel {
+  const remap = OPENING_REMAP[original.id]
+  if (!remap && original.id !== 14 && original.id !== 15) return original
+  const tiles = original.tiles.map(color => color ? remap?.[color] ?? color : null)
+  const ice = original.id === 15 ? original.ice.map(() => 0) : [...original.ice]
+  const shells = original.id === 14 ? original.shells.slice(0, 1) : original.shells
+  const lanes = makeLanes(original.id, tiles, ice, 16)
+  return {
+    ...original, tiles, ice, shells, lanes,
+    name: original.id === 14 ? '潮汐之門' : original.id === 15 ? '珍珠寶藏' : original.name,
+    subtitle: original.id === 14 ? '找到一組珍珠，讓海流繼續前進。' : original.id === 15 ? '打開貝殼，收下這份小小的禮物。' : original.subtitle,
+    par: lanes.flat().length + Math.ceil(original.size / 2) + 2,
+  }
+}
+
+const OPENING_LEVELS = ORIGINAL_LEVELS.map(easeOpeningLevel)
+export const TIDE_LEVELS = [...OPENING_LEVELS, ...buildCampaignLevels(ORIGINAL_LEVELS, OPENING_LEVELS)]
 
 export function createTide(level: TideLevel): TideState {
   return { tiles: [...level.tiles], ice: [...level.ice], shells: level.shells.map(g => ({ ...g, pearls: [...g.pearls], cells: [...g.cells] })), openedShells: [], lanes: level.lanes.map(l => l.map(j => ({ ...j }))), pool: [], swimmers: [], tick: 0, shots: [], effects: [], combo: 0, bestCombo: 0, lastHitTick: -100, clearedColors: [], phase: 'playing', launched: 0 }
