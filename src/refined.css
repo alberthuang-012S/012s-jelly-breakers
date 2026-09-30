@@ -222,7 +222,19 @@ button.ice-counter[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #568f80; }
 .ocean-app .dock-slot.reserved .jelly-art b { visibility: hidden; }
 .ocean-app .dock-slot.reserved { border: 1px dashed #9db7a6; background: #eaf2ed; }
 .ocean-app .dock-slot.empty { border: 1px solid #dce6d9; background: #e8efe6; }
-.ocean-app .dock-slot .dock-berth { width: 28px; height: 26px; margin: 8px 0; border: 2px solid #becfbc; border-top: 0; border-radius: 0 0 10px 10px; }
+.ocean-app .dock-slot .dock-berth {
+  position: relative; width: 34px; height: 42px; flex-shrink: 0;
+  background: radial-gradient(ellipse at center, #d4e7df 0, #e2eee7 55%, transparent 72%);
+}
+.dock-berth::before {
+  content: ''; position: absolute; left: 3px; top: 18px; width: 28px; height: 12px;
+  border: 1px solid #9dbdb044; border-radius: 50%;
+  box-shadow: 0 0 0 4px #b6d0c52b;
+}
+.dock-berth::after {
+  content: ''; position: absolute; left: 14px; top: 16px; width: 6px; height: 6px;
+  background: #a0c4b5; border: 1px solid #f5faf7; border-radius: 50%;
+}
 .ocean-app .dock-slot.dock-ready { border: 2px solid #68947d; background: #fffefa; }
 .ocean-app .dock .dock-slot.dock-ready .dock-slot-label { color: #416d61; font-weight: 600; }
 .ocean-app .dock-slot.occupied:hover:not(:disabled) { background: #e7f2e9; }
