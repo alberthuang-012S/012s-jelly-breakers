@@ -1,6 +1,6 @@
 # Jelly Orbit · 水母的海洋小旅行
 
-A one-hundred-stage, mobile-first ocean puzzle. Send jellyfish around a moving track, reveal matching colors, and collect ocean pixel art.
+A three-hundred-stage, mobile-first ocean puzzle with Easy, Normal and Hard journeys of one hundred stages each. Send jellyfish around a moving track, reveal matching colors, and collect ocean pixel art.
 
 ## Gameplay
 
@@ -8,7 +8,7 @@ A one-hundred-stage, mobile-first ocean puzzle. Send jellyfish around a moving t
 - A small flag marks the upper-left corner where each lap begins and ends.
 - Each swimmer fires inward along its current side. The first solid cube blocks everything behind it; a matching hit spends one bubble.
 - From stage 6, snowflake-marked cubes have an ice shell. The first matching bubble removes the shell but leaves the cube blocking the ray; the second removes the cube. Both hits consume ammo. Stage ammo includes the extra ice hits.
-- Empty swimmers leave immediately. Those with bubbles remaining return after one lap to a five-slot waiting bay and can be launched again.
+- Empty swimmers leave immediately. Those with bubbles remaining return after one lap to a waiting bay and can be launched again: five slots in Easy/Normal and four in Hard.
 - Each traveling swimmer reserves one waiting slot, shown by a return arrow. A full bay still lets its own swimmers relaunch.
 - Clear every cube to win. Loss is checked only after all swimmers settle, when no waiting swimmer can hit anything and no new queue can be opened.
 - Undo restores the complete state before the last launch, including other swimmers in flight. Hints suggest locally useful colors; they do not guarantee optimal play.
@@ -41,7 +41,17 @@ The previous turn-based engine, solver, levels and tests remain as reference. Th
 
 Completed stages are stored under `jellyOrbitTideV2`, without changing previous-version progress. Reloading restarts the current stage and keeps unlocks. Audio starts muted. Google Fonts is optional, with system-font fallback.
 
-The hundred-stage catalogue passes automated route checks, but actual difficulty and pacing still need real-player playtesting. Accounts, monetization and daily challenges are outside this version.
+## Difficulty journeys
+
+The original one hundred stages remain unchanged as Easy. Each difficulty has its own chapter navigation, stage numbers 1–100, unlock chain, collection count and personal records. All three first stages are available immediately. Finishing stage 100 returns to the map; it never silently starts another difficulty. The last played difficulty is remembered.
+
+Normal adds one hundred 12×12 boards with smaller ammo units (caps of 8–12), blocked queue heads that require temporary docks, and progressively combined ice/shell locks. Hard adds one hundred 14×14 boards with four docks, ammo caps of 6–10 and up to three shell groups whose dependencies lead inward. Chapters use ten geometric motifs with changing silhouettes, entrances and middle-band colors; stages 4 and 8 in each chapter ease the pressure. These are deterministic authored pattern families, not rotations of the Easy catalogue. Ammo for the last unit of a color may be below the cap.
+
+`tools/generateAdvancedLevels.mjs` regenerates `src/game/advancedLevels.json` using the real simulation. Run `node tools/generateAdvancedLevels.mjs`, then run the checks below. Each new stage contains a reference winning route and exact per-color ammo, including ice hits. `src/game/difficulty.test.ts` replays all two hundred routes and also verifies a losing route for every new stage: repeatedly dispatching blocked colors fills the bay, and loss occurs only after everyone returns. No time limit or random failure is added; hints, undo and replay stay available. Hints remain local suggestions rather than guaranteed solutions.
+
+Existing completion/record keys are retained. Easy IDs remain 1–100, Normal uses 101–200 internally and Hard 201–300, so old Easy progress and scores are preserved without granting Normal/Hard completions. The map and game display local stage numbers rather than these internal IDs.
+
+All three hundred stages pass automated route checks, but actual difficulty and pacing still need real-player playtesting. Accounts, monetization and daily challenges are outside this version.
 
 ## Development
 

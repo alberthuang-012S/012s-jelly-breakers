@@ -1527,3 +1527,27 @@ img{
   .result-modal .treasure-art { width: 110px; height: 110px; margin: 20px auto; padding: 20px; }
   .result-modal .result-stats { margin-top: 12px; }
 }
+.difficulty-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+.difficulty-nav button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 6px;
+  border: 1px solid #d4e5df;
+  border-radius: 14px;
+  background: #f5faf7;
+  color: #42645e;
+  cursor: pointer;
+}
+.difficulty-nav button.selected {
+  background: #dcefe5;
+  border-color: #598d7e;
+  box-shadow: inset 0 0 0 1px #598d7e;
+}
+.difficulty-nav button:focus-visible { outline: 3px solid #ffc947; outline-offset: 3px; }
+.difficulty-description { color: #637d77; font-size: 13px; line-height: 1.7; }

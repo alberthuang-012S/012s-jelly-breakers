@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { CAPACITY, COLOR_NAMES, HEX, POOL_SIZE, TICK_MS, TIDE_LEVELS, canHit, createTide, hintMove, isLocked, isShellClosed, launch, orbitPoint, stepTide } from './game/tide'
-import type { TideState } from './game/tide'
+import { ALL_LEVELS, CAPACITY, COLOR_NAMES, DIFFICULTIES, DIFFICULTY_NAMES, HEX, TICK_MS, canHit, createTide, hintMove, isLocked, isShellClosed, launch, levelsFor, orbitPoint, stageNumber, stepTide } from './game/tide'
+import type { Difficulty, TideState } from './game/tide'
 import type { JellyColor, JellyUnit } from './game/types'
 import { CHAPTER_NAMES } from './game/campaign'
 import { TideEffects } from './components/TideEffects'
-import { TIDE_SAVE_KEY, nextStageIndex, readTideProgress, rememberIce, rememberShell, stageTutorial } from './storage/tideProgress'
+import { TIDE_SAVE_KEY, isStageUnlocked, nextStageIndex, readDifficulty, readTideProgress, rememberDifficulty, rememberIce, rememberShell, stageTutorial } from './storage/tideProgress'
 import { Challenges, ShellIntro } from './components/Challenges'
 import { readRecords, recordWin, saveRecords } from './storage/tideRecords'
 import type { RunStats } from './storage/tideRecords'
@@ -28,13 +28,19 @@ function ChapterNavigator({ selected, onSelect }: { selected: number; onSelect: 
 
 export default function App() {
   const [completed, setCompleted] = useState(readTideProgress)
-  const [levelIndex, setLevelIndex] = useState(() => nextStageIndex(readTideProgress()))
-  const [selectedChapter, setSelectedChapter] = useState(() => Math.floor(nextStageIndex(readTideProgress()) / 10))
-  const level = TIDE_LEVELS[levelIndex]
-  const chapterLevels = TIDE_LEVELS.slice(selectedChapter * 10, selectedChapter * 10 + 10)
-  const [game, setGame] = useState<TideState>(() => createTide(TIDE_LEVELS[nextStageIndex(readTideProgress())]))
+  const [levelIndex, setLevelIndex] = useState(() => nextStageIndex(readTideProgress(), readDifficulty()))
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(readDifficulty)
+  const [selectedChapter, setSelectedChapter] = useState(() => Math.floor(nextStageIndex(readTideProgress(), readDifficulty()) % 100 / 10))
+  const level = ALL_LEVELS[levelIndex]
+  const difficulty = level.difficulty ?? 'easy'
+  const difficultyLevels = levelsFor(selectedDifficulty)
+  const chapterLevels = difficultyLevels.slice(selectedChapter * 10, selectedChapter * 10 + 10)
+  const difficultyCompleted = completed.filter(id => levelsFor(difficulty).some(l => l.id === id)).length
+  const mapCompleted = difficultyLevels.filter(l => completed.includes(l.id)).length
+  const number = stageNumber(level)
+  const [game, setGame] = useState<TideState>(() => createTide(ALL_LEVELS[nextStageIndex(readTideProgress(), readDifficulty())]))
   const [overlay, setOverlay] = useState<'help' | 'map' | 'ice' | 'shell' | 'settings' | 'records' | null>(() => {
-    const tutorial = stageTutorial(nextStageIndex(readTideProgress()));
+    const tutorial = stageTutorial(nextStageIndex(readTideProgress(), readDifficulty()));
     if (tutorial) return tutorial;
     try { return localStorage.getItem('jellyOrbitWelcomeV1') ? null : 'help' } catch { return 'help' }
   })
@@ -108,17 +114,29 @@ export default function App() {
   useEffect(() => () => { void audio.current?.close() }, [])
 
   function start(index: number) {
-    setLevelIndex(index); setGame(createTide(TIDE_LEVELS[index])); setHistory([]); setHint(null); setNotice(''); setOverlay(null); setPaused(false); lastSound.current = -1
-    setSelectedChapter(Math.floor(index / 10))
+    const nextDifficulty = ALL_LEVELS[index].difficulty ?? 'easy'
+    setLevelIndex(index); setGame(createTide(ALL_LEVELS[index])); setHistory([]); setHint(null); setNotice(''); setOverlay(null); setPaused(false); lastSound.current = -1
+    setSelectedDifficulty(nextDifficulty); rememberDifficulty(nextDifficulty)
+    setSelectedChapter(Math.floor(index % 100 / 10))
     setOverlay(stageTutorial(index))
     setRun({ launches: 0, hints: 0, undos: 0 })
-    setChallengeUnlocked(completed.includes(TIDE_LEVELS[index].id))
+    setChallengeUnlocked(completed.includes(ALL_LEVELS[index].id))
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+  function openMap() {
+    setSelectedDifficulty(difficulty); setSelectedChapter(Math.floor((number - 1) / 10)); setOverlay('map')
+  }
+  function browseDifficulty(next: Difficulty) {
+    setSelectedDifficulty(next)
+    setSelectedChapter(Math.floor(nextStageIndex(completed, next) % 100 / 10))
   }
   function closeOverlay() {
     if (overlay === 'help') { try { localStorage.setItem('jellyOrbitWelcomeV1', 'seen') } catch { /* The game works without storage. */ } }
     if (overlay === 'ice') rememberIce()
-    if (overlay === 'shell') rememberShell()
+    if (overlay === 'shell') {
+      rememberShell()
+      if (level.ice.some(Boolean) && stageTutorial(levelIndex) === 'ice') { setOverlay('ice'); return }
+    }
     setOverlay(null)
   }
   function send(source: 'lane' | 'pool', index: number) {
@@ -157,14 +175,14 @@ export default function App() {
   return <div className="ocean-app">
     <div inert={Boolean(overlay) || game.phase !== 'playing'}>
     <header className="site-header">
-      <a className="wordmark" href="#" onClick={e => { e.preventDefault(); setSelectedChapter(Math.floor(levelIndex / 10)); setOverlay('map') }} aria-label="Jelly Orbit 關卡圖鑑"><span className="brand-symbol" aria-hidden="true">✳</span> jelly<span>orbit</span></a>
-      <div className="header-actions"><button className="nav-button" onClick={() => { setSelectedChapter(Math.floor(levelIndex / 10)); setOverlay('map') }}><span aria-hidden="true">▦</span> 關卡圖鑑</button><button className="circle-button" onClick={() => setOverlay('help')} aria-label="遊戲說明">?</button></div>
+      <a className="wordmark" href="#" onClick={e => { e.preventDefault(); openMap() }} aria-label="Jelly Orbit 關卡圖鑑"><span className="brand-symbol" aria-hidden="true">✳</span> jelly<span>orbit</span></a>
+      <div className="header-actions"><button className="nav-button" onClick={() => { openMap() }}><span aria-hidden="true">▦</span> 關卡圖鑑</button><button className="circle-button" onClick={() => setOverlay('help')} aria-label="遊戲說明">?</button></div>
     </header>
     <main className="main-layout">
       <section className="game-shell" aria-label="Jelly Orbit 遊戲">
-        <div className="level-bar"><span className="level-number" aria-hidden="true">{String(level.id).padStart(2, '0')}</span><div><span className="eyebrow">第 {String(level.id).padStart(2, '0')} 關</span><h2>{level.name}</h2></div><button className="circle-button" onClick={() => setPaused(p => !p)} aria-label={paused ? '繼續遊戲' : '暫停遊戲'}>{paused ? '▶' : 'Ⅱ'}</button></div>
+        <div className="level-bar"><span className="level-number" aria-hidden="true">{String(number).padStart(2, '0')}</span><div><span className="eyebrow">{DIFFICULTY_NAMES[difficulty]} · 第 {String(number).padStart(2, '0')} 關</span><h2>{level.name}</h2></div><button className="circle-button" onClick={() => setPaused(p => !p)} aria-label={paused ? '繼續遊戲' : '暫停遊戲'}>{paused ? '▶' : 'Ⅱ'}</button></div>
         <div className="progress-row"><span>海洋修復 <b>{progress}%</b></span>{iceLeft > 0 && <span className="ice-counter">❄ {iceLeft} 層冰</span>}</div><div className="progress-track" role="progressbar" aria-label="海洋修復進度" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div style={{ width: `${progress}%` }} /></div>
-        <div className={`playfield ${paused || overlay || hidden ? 'is-paused' : ''} ${level.id >= 11 ? 'pearl-field' : level.id >= 6 ? 'frost-field' : ''}`}>
+        <div className={`playfield ${paused || overlay || hidden ? 'is-paused' : ''} ${level.shells.length ? 'pearl-field' : level.ice.some(Boolean) ? 'frost-field' : ''}`}>
 
           <svg className="orbit-svg" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="orbit-flag-fabric" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffe1a7" /><stop offset=".55" stopColor="#f4b98a" /><stop offset="1" stopColor="#e89885" /></linearGradient></defs><rect className="track-shadow" x="14" y="14" width="72" height="72" rx="9" /><rect className="track-base" x="14" y="14" width="72" height="72" rx="9" /><rect className="track-dashes" x="14" y="14" width="72" height="72" rx="9" /><path d="M49 14h3l-1.5-1.5M86 49v3l1.5-1.5M51 86h-3l1.5 1.5M14 51v-3l-1.5 1.5" className="track-arrows" /><g className="track-flag"><ellipse className="track-flag-shadow" cx="23" cy="15" rx="2.8" ry="1" /><path className="track-flag-pole" d="M23 3.3v11.3" /><circle className="track-flag-finial" cx="23" cy="3.1" r="1.15" /><path className="track-flag-cloth" d="M23 4.7c2.8-1.1 5.3.5 8.3-.8l-1.1 2.8 1.3 2.5c-3.2-1-5.7.8-8.5-.3Z" /><path className="track-flag-fold" d="M23.5 5.3c2.6-.7 4.7.5 7-.3M23.5 8.3c2.8.8 5-.7 7.1-.2" /><path className="track-flag-sparkle" d="m27 5.2.35 1 .95.35-.95.35-.35 1-.35-1-.95-.35.95-.35Z" /><circle className="track-flag-base" cx="23" cy="14" r="1.85" /><circle className="track-flag-base-inner" cx="23" cy="14" r=".65" /></g></svg>
           <div className="pixel-board" style={{ gridTemplateColumns: `repeat(${level.size}, 1fr)` }} role="img" aria-label={`色塊圖案，剩下 ${left} 格`}>
@@ -176,11 +194,11 @@ export default function App() {
           {paused && <div className="pause-cover"><span>海流暫停了</span><button className="primary" onClick={() => setPaused(false)}>繼續漂流 ▶</button></div>}
         </div>
         {game.shells.length > 0 && <div className="shell-tracker" aria-label="貝殼解鎖進度">{game.shells.map(group => <span className={isShellClosed(game, group) ? '' : 'opened'} key={group.id}><b>{group.id}</b>{isShellClosed(game, group) ? `珍珠 ${group.pearls.filter(i => !game.tiles[i]).length}/${group.pearls.length}` : '貝殼已開 ✓'}</span>)}</div>}
-        <div className={`dock ${game.pool.length + game.swimmers.length >= 4 ? 'dock-warning' : ''}`}><div className="section-label"><h3>返航小棧</h3><b>{game.pool.length}<span> / 5</span></b></div><div className="dock-slots">{Array.from({ length: POOL_SIZE }, (_, i) => { const jelly = game.pool[i]; return jelly ? <button key={jelly.id} className={`dock-slot occupied ${hint === `pool-${i}` ? 'hinted' : ''}`} onClick={() => send('pool', i)} disabled={!canPlay} aria-label={`派遣等待區${COLOR_NAMES[jelly.color]}水母，${jelly.energy}發泡泡`}><Jelly jelly={jelly} small />{canHit(game, jelly.color, level.size) && <span className="ready-dot" />}</button> : <div className={`dock-slot ${i < game.pool.length + game.swimmers.length ? 'reserved' : ''}`} key={`empty-${i}`}><span>{i < game.pool.length + game.swimmers.length ? '↩' : '·'}</span></div> })}</div></div>
+        <div className={`dock ${game.pool.length + game.swimmers.length >= game.poolSize - 1 ? 'dock-warning' : ''}`}><div className="section-label"><h3>返航小棧</h3><b>{game.pool.length}<span> / {game.poolSize}</span></b></div><div className="dock-slots" style={{ gridTemplateColumns: `repeat(${game.poolSize}, 1fr)` }}>{Array.from({ length: game.poolSize }, (_, i) => { const jelly = game.pool[i]; return jelly ? <button key={jelly.id} className={`dock-slot occupied ${hint === `pool-${i}` ? 'hinted' : ''}`} onClick={() => send('pool', i)} disabled={!canPlay} aria-label={`派遣等待區${COLOR_NAMES[jelly.color]}水母，${jelly.energy}發泡泡`}><Jelly jelly={jelly} small />{canHit(game, jelly.color, level.size) && <span className="ready-dot" />}</button> : <div className={`dock-slot ${i < game.pool.length + game.swimmers.length ? 'reserved' : ''}`} key={`empty-${i}`}><span>{i < game.pool.length + game.swimmers.length ? '↩' : '·'}</span></div> })}</div></div>
         <div className="queue-section"><div className="section-label"><h3>準備出發</h3></div><div className="lanes">{game.lanes.map((lane, index) => <div className="lane" key={index}>{lane.length ? <><div className="lane-back">{lane.slice(1, 3).reverse().map(j => <span key={j.id} className="queued-jelly"><Jelly jelly={j} small /></span>)}</div><button className={`launch-button ${hint === `lane-${index}` ? 'hinted' : ''}`} onClick={() => send('lane', index)} disabled={!canPlay} style={{ '--jelly-color': HEX[lane[0].color] } as React.CSSProperties} aria-label={`派遣第${index + 1}列${COLOR_NAMES[lane[0].color]}水母，${lane[0].energy}發泡泡`}><Jelly jelly={lane[0]} /><span>{COLOR_NAMES[lane[0].color]} <i>↑</i></span></button><small aria-label={`後排還有 ${lane.length - 1} 位夥伴`}>後排 {lane.length - 1}</small></> : <div className="lane-empty">✓<small>全員出發</small></div>}</div>)}</div></div>
         <div className="game-tools"><button onClick={undo} disabled={!history.length || !canPlay}><span aria-hidden="true">↶</span>撤回</button><button onClick={showHint} disabled={!canPlay}><span aria-hidden="true">☼</span>提示</button><button onClick={() => setOverlay('settings')} aria-haspopup="dialog"><span aria-hidden="true">···</span>更多</button></div>
 
-        <div className={`status-message ${notice ? 'has-notice' : ''}`} role="status">{notice || (game.pool.length + game.swimmers.length >= 4 ? '位置快滿了，優先派出返航的夥伴。' : '')}</div>
+        <div className={`status-message ${notice ? 'has-notice' : ''}`} role="status">{notice || (game.pool.length + game.swimmers.length >= game.poolSize - 1 ? '位置快滿了，優先派出返航的夥伴。' : '')}</div>
       </section>
     </main><footer className="site-footer"><span>慢慢來，跟著海流就好。</span></footer>
     </div>
@@ -189,7 +207,7 @@ export default function App() {
       <button onClick={() => setFast(f => !f)} aria-pressed={fast}><span>漂流速度</span><b>{fast ? '2×' : '1×'}</b></button>
       <button onClick={() => setOverlay('records')}><span>航海紀錄與挑戰</span><b>→</b></button>
       <button onClick={() => start(levelIndex)}><span>重新開始這一關</span><b>↻</b></button>
-    </div> : overlay === 'records' ? <div className="record-content"><p>剩餘 {left} 格色塊 · 已派遣 {run.launches} 次</p><p>提示 {run.hints} 次 · 撤回 {run.undos} 次</p><Challenges record={records[level.id]} par={level.par} unlocked={challengeUnlocked} /><p>撤回不扣回派遣次數；挑戰不影響通關。</p></div> : overlay === 'shell' ? <ShellIntro /> : overlay === 'ice' ? <div className="ice-intro"><p>透明冰殼裡，藏著熟悉的顏色。</p><div className="ice-demo"><div><span className="demo-cube frozen">❄</span><b>冰封</b></div><i>→</i><div><span className="demo-cube" /><b>第 1 發：破冰</b></div><i>→</i><div><span className="demo-pop">✦</span><b>第 2 發：消除</b></div></div><p>兩發都必須是<strong>同色泡泡</strong>。<br />冰破了，色塊仍會擋住後方目標。</p><span className="ice-tip">先打開入口，再讓內層顏色出發。</span></div> : overlay === 'help' ? <><p className="welcome-copy">讓心情，順著海流慢慢放晴。</p><img className="help-jelly" src={imageFor('aqua')} alt="海藍色水母" /><ol className="help-steps"><li><b>點最前排，出發！</b><span>最多 3 隻水母同時環繞，數字是剩餘泡泡。</span></li><li><b>同色命中，層層打開。</b><span>水母向內射出同色泡泡，從外向內解開圖案。新機關會在旅途中逐步介紹。</span></li><li><b>返航了，再試一次。</b><span>剩餘泡泡會回到 5 格小棧。↩ 是航行夥伴預留的位置；有綠點表示目前有同色目標。</span></li><li><b>留點空間給下一步。</b><span>小棧塞滿且沒有任何水母能消除，就需要撤回或重玩。隨時可以暫停，沒有時間限制。</span></li></ol></> : <div className="map-list"><p className="collection-summary">已收藏 {completed.length} / {TIDE_LEVELS.length} 段海洋旅程</p><ChapterNavigator selected={selectedChapter} onSelect={setSelectedChapter} />{chapterLevels.map((l) => { const i = l.id - 1; return <button key={l.id} className={levelIndex === i ? 'current-stage' : ''} aria-current={levelIndex === i ? 'step' : undefined} disabled={i > 0 && !completed.includes(i)} onClick={() => start(i)}><MiniArt tiles={l.tiles} size={l.size} /><span><small>第 {String(l.id).padStart(2, '0')} 關</small><b>{l.name}</b>{records[l.id] && <small>最佳 {records[l.id].bestLaunches} 次 · {records[l.id].noHint ? '獨立探索 ✓' : '挑戰可重玩'}</small>}</span><em>{completed.includes(l.id) ? '已收藏 ✓' : levelIndex === i ? '探索中' : i === 0 || completed.includes(i) ? '→' : '未解鎖'}</em></button> })}</div>}<button className="primary" onClick={closeOverlay}>{overlay === 'shell' ? '出發，尋找珍珠 →' : overlay === 'ice' ? '出發，試試破冰 →' : overlay === 'help' ? '知道了，開始漂流 →' : '回到海流'}</button></section></div>}
-    {game.phase !== 'playing' && !overlay && <div className="modal-backdrop"><section className="modal result-modal" role="dialog" aria-modal="true" aria-label={game.phase === 'won' ? '關卡完成' : '等待區已滿'}><span className="eyebrow">{game.phase === 'won' ? 'A LITTLE TREASURE, JUST FOR YOU' : 'LET’S FIND ANOTHER WAY'}</span>{game.phase === 'won' ? <div className="treasure-art"><MiniArt tiles={level.tiles} size={level.size} /><span>✦</span></div> : <img className="help-jelly" src={imageFor('purple')} alt="等待出發的水母" />}<h2>{game.phase === 'won' ? '把美好，收進海裡。' : '海流有點塞住了。'}</h2><p>{game.phase === 'won' ? `「${level.name}」已加入圖鑑。你完成了 ${completed.length} / ${TIDE_LEVELS.length} 段旅程！` : '等待區已滿，外層也沒有能命中的顏色。換個出發順序，再試試看。'}</p><div className="result-stats"><span><b>{game.bestCombo}</b>最高連擊</span><span><b>{run.launches}</b>次派遣</span></div><>{game.phase === 'won' && <Challenges record={records[level.id]} par={level.par} unlocked={true} />}{game.phase === 'won' && !challengeUnlocked && <p className="challenge-unlocked">選用挑戰已解鎖，下次重玩可以試試！</p>}</><button autoFocus className="primary" onClick={() => game.phase === 'won' ? (levelIndex < TIDE_LEVELS.length - 1 ? start(levelIndex + 1) : setOverlay('map')) : undo()}>{game.phase === 'won' ? (levelIndex < TIDE_LEVELS.length - 1 ? '下一片海，出發 →' : '欣賞我的海洋圖鑑 →') : '撤回上一次派遣 ↶'}</button><button className="text-button" onClick={() => start(levelIndex)}>再玩一次</button></section></div>}
+    </div> : overlay === 'records' ? <div className="record-content"><p>剩餘 {left} 格色塊 · 已派遣 {run.launches} 次</p><p>提示 {run.hints} 次 · 撤回 {run.undos} 次</p><Challenges record={records[level.id]} par={level.par} unlocked={challengeUnlocked} /><p>撤回不扣回派遣次數；挑戰不影響通關。</p></div> : overlay === 'shell' ? <ShellIntro /> : overlay === 'ice' ? <div className="ice-intro"><p>透明冰殼裡，藏著熟悉的顏色。</p><div className="ice-demo"><div><span className="demo-cube frozen">❄</span><b>冰封</b></div><i>→</i><div><span className="demo-cube" /><b>第 1 發：破冰</b></div><i>→</i><div><span className="demo-pop">✦</span><b>第 2 發：消除</b></div></div><p>兩發都必須是<strong>同色泡泡</strong>。<br />冰破了，色塊仍會擋住後方目標。</p><span className="ice-tip">先打開入口，再讓內層顏色出發。</span></div> : overlay === 'help' ? <><p className="welcome-copy">讓心情，順著海流慢慢放晴。</p><img className="help-jelly" src={imageFor('aqua')} alt="海藍色水母" /><ol className="help-steps"><li><b>點最前排，出發！</b><span>最多 3 隻水母同時環繞，數字是剩餘泡泡。</span></li><li><b>同色命中，層層打開。</b><span>水母向內射出同色泡泡，從外向內解開圖案。新機關會在旅途中逐步介紹。</span></li><li><b>返航了，再試一次。</b><span>剩餘泡泡會回到小棧：簡單、普通 5 格，困難 4 格。↩ 是航行夥伴預留的位置；有綠點表示目前有同色目標。</span></li><li><b>留點空間給下一步。</b><span>小棧塞滿且沒有任何水母能消除，就需要撤回或重玩。隨時可以暫停，沒有時間限制。</span></li></ol></> : <div className="map-list"><p className="collection-summary">{DIFFICULTY_NAMES[selectedDifficulty]}已收藏 {mapCompleted} / 100 · 全部 {completed.length} / 300</p><nav className="difficulty-nav" aria-label="關卡難度">{DIFFICULTIES.map(d => <button key={d} type="button" aria-pressed={selectedDifficulty === d} className={selectedDifficulty === d ? 'selected' : ''} onClick={() => browseDifficulty(d)}><b>{DIFFICULTY_NAMES[d]}</b><small>{levelsFor(d).filter(l => completed.includes(l.id)).length} / 100</small></button>)}</nav><p className="difficulty-description">{selectedDifficulty === 'easy' ? '輕鬆觀察，慢慢打開海洋圖案。五格小棧，容錯較高。' : selectedDifficulty === 'normal' ? '安排出發順序，保留返航空位。五格小棧。' : '提前規劃解鎖順序。四格小棧，派遣失誤更容易卡住。'} 無時間限制，可提示、撤回或重玩。</p><ChapterNavigator selected={selectedChapter} onSelect={setSelectedChapter} />{chapterLevels.map((l) => { const i = ALL_LEVELS.findIndex(candidate => candidate.id === l.id); return <button key={l.id} className={levelIndex === i ? 'current-stage' : ''} aria-current={levelIndex === i ? 'step' : undefined} disabled={!isStageUnlocked(l.id, completed)} onClick={() => start(i)}><MiniArt tiles={l.tiles} size={l.size} /><span><small>第 {String(stageNumber(l)).padStart(2, '0')} 關</small><b>{l.name}</b>{records[l.id] && <small>最佳 {records[l.id].bestLaunches} 次 · {records[l.id].noHint ? '獨立探索 ✓' : '挑戰可重玩'}</small>}</span><em>{completed.includes(l.id) ? '已收藏 ✓' : levelIndex === i ? '探索中' : isStageUnlocked(l.id, completed) ? '→' : '未解鎖'}</em></button> })}</div>}<button className="primary" onClick={closeOverlay}>{overlay === 'shell' ? '出發，尋找珍珠 →' : overlay === 'ice' ? '出發，試試破冰 →' : overlay === 'help' ? '知道了，開始漂流 →' : '回到海流'}</button></section></div>}
+    {game.phase !== 'playing' && !overlay && <div className="modal-backdrop"><section className="modal result-modal" role="dialog" aria-modal="true" aria-label={game.phase === 'won' ? '關卡完成' : '等待區已滿'}><span className="eyebrow">{game.phase === 'won' ? 'A LITTLE TREASURE, JUST FOR YOU' : 'LET’S FIND ANOTHER WAY'}</span>{game.phase === 'won' ? <div className="treasure-art"><MiniArt tiles={level.tiles} size={level.size} /><span>✦</span></div> : <img className="help-jelly" src={imageFor('purple')} alt="等待出發的水母" />}<h2>{game.phase === 'won' ? '把美好，收進海裡。' : '海流有點塞住了。'}</h2><p>{game.phase === 'won' ? `「${level.name}」已加入圖鑑。你完成了${DIFFICULTY_NAMES[difficulty]} ${difficultyCompleted} / 100 段旅程！` : '等待區已滿，外層也沒有能命中的顏色。換個出發順序，再試試看。'}</p><div className="result-stats"><span><b>{game.bestCombo}</b>最高連擊</span><span><b>{run.launches}</b>次派遣</span></div><>{game.phase === 'won' && <Challenges record={records[level.id]} par={level.par} unlocked={true} />}{game.phase === 'won' && !challengeUnlocked && <p className="challenge-unlocked">選用挑戰已解鎖，下次重玩可以試試！</p>}</><button autoFocus className="primary" onClick={() => game.phase === 'won' ? (number < 100 ? start(levelIndex + 1) : setOverlay('map')) : undo()}>{game.phase === 'won' ? (number < 100 ? '下一片海，出發 →' : '選擇下一段旅程 →') : '撤回上一次派遣 ↶'}</button><button className="text-button" onClick={() => start(levelIndex)}>再玩一次</button></section></div>}
   </div>
 }
