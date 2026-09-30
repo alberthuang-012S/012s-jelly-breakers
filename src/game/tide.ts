@@ -1,15 +1,19 @@
 import type { JellyColor, JellyUnit } from './types'
 import { buildCampaignLevels, makeLanes } from './campaign'
+import advancedLevels from './advancedLevels.json'
 
 export const COLORS: JellyColor[] = ['yellow', 'pink', 'aqua', 'green', 'purple']
 export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '檸檬', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
 export const HEX: Record<JellyColor, string> = { yellow: '#ffc947', pink: '#ff82ac', aqua: '#55d7e0', green: '#93d772', purple: '#b29aee' }
 export type Tile = JellyColor | null
 export type ShellGroup = { id: string; pearls: number[]; cells: number[] }
-export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; shells: ShellGroup[]; lanes: JellyUnit[][]; par: number }
+export type Difficulty = 'easy' | 'normal' | 'hard'
+export const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
+export const DIFFICULTY_NAMES: Record<Difficulty, string> = { easy: '簡單', normal: '普通', hard: '困難' }
+export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; shells: ShellGroup[]; lanes: JellyUnit[][]; par: number; difficulty?: Difficulty; poolSize?: number; solution?: string[] }
 export type Swimmer = JellyUnit & { age: number }
 export type Shot = { id: string; color: JellyColor; from: [number, number]; target: number; sourceId: string; tick: number; cracked: boolean }
-export type TideState = { tiles: Tile[]; ice: number[]; shells: ShellGroup[]; openedShells: string[]; lanes: JellyUnit[][]; pool: JellyUnit[]; swimmers: Swimmer[]; tick: number; shots: Shot[]; effects: Shot[]; combo: number; bestCombo: number; lastHitTick: number; clearedColors: JellyColor[]; phase: 'playing' | 'won' | 'lost'; launched: number }
+export type TideState = { tiles: Tile[]; ice: number[]; shells: ShellGroup[]; openedShells: string[]; lanes: JellyUnit[][]; pool: JellyUnit[]; poolSize: number; swimmers: Swimmer[]; tick: number; shots: Shot[]; effects: Shot[]; combo: number; bestCombo: number; lastHitTick: number; clearedColors: JellyColor[]; phase: 'playing' | 'won' | 'lost'; launched: number }
 export const CAPACITY = 3
 export const POOL_SIZE = 5
 export const TICK_MS = 75
@@ -118,9 +122,14 @@ function easeOpeningLevel(original: TideLevel): TideLevel {
 
 const OPENING_LEVELS = ORIGINAL_LEVELS.map(easeOpeningLevel)
 export const TIDE_LEVELS = [...OPENING_LEVELS, ...buildCampaignLevels(ORIGINAL_LEVELS, OPENING_LEVELS)]
+export const ALL_LEVELS: TideLevel[] = [...TIDE_LEVELS, ...advancedLevels as TideLevel[]]
+export function levelsFor(difficulty: Difficulty): TideLevel[] {
+  return ALL_LEVELS.filter(level => (level.difficulty ?? 'easy') === difficulty)
+}
+export function stageNumber(level: TideLevel): number { return (level.id - 1) % 100 + 1 }
 
 export function createTide(level: TideLevel): TideState {
-  return { tiles: [...level.tiles], ice: [...level.ice], shells: level.shells.map(g => ({ ...g, pearls: [...g.pearls], cells: [...g.cells] })), openedShells: [], lanes: level.lanes.map(l => l.map(j => ({ ...j }))), pool: [], swimmers: [], tick: 0, shots: [], effects: [], combo: 0, bestCombo: 0, lastHitTick: -100, clearedColors: [], phase: 'playing', launched: 0 }
+  return { tiles: [...level.tiles], ice: [...level.ice], shells: level.shells.map(g => ({ ...g, pearls: [...g.pearls], cells: [...g.cells] })), openedShells: [], lanes: level.lanes.map(l => l.map(j => ({ ...j }))), pool: [], poolSize: level.poolSize ?? POOL_SIZE, swimmers: [], tick: 0, shots: [], effects: [], combo: 0, bestCombo: 0, lastHitTick: -100, clearedColors: [], phase: 'playing', launched: 0 }
 }
 export function isShellClosed(state: Pick<TideState, 'tiles'>, group: ShellGroup): boolean {
   return group.pearls.some(i => state.tiles[i] !== null)
@@ -157,7 +166,7 @@ export function launch(state: TideState, source: 'lane' | 'pool', index: number)
   if (!jelly) return state
   // Reserve a dock for every swimmer. This avoids ambiguous overflow while
   // other swimmers are still shooting, and always lets pool jellies relaunch.
-  if (source === 'lane' && state.pool.length + state.swimmers.length >= POOL_SIZE) return state
+  if (source === 'lane' && state.pool.length + state.swimmers.length >= state.poolSize) return state
   return {
     ...state,
     lanes: state.lanes.map((l, i) => source === 'lane' && i === index ? l.slice(1) : l),
@@ -195,7 +204,7 @@ export function stepTide(state: TideState, size: number): TideState {
   if (next.tiles.every(t => t === null)) next.phase = 'won'
   else if (!next.swimmers.length) {
     const usefulPool = next.pool.some(j => canHit(next, j.color, size))
-    const canOpenQueue = next.pool.length < POOL_SIZE && next.lanes.some(l => l.length)
+    const canOpenQueue = next.pool.length < next.poolSize && next.lanes.some(l => l.length)
     if (!usefulPool && !canOpenQueue) next.phase = 'lost'
   }
   return next
@@ -205,8 +214,8 @@ export function hintMove(state: TideState, size: number): { source: 'lane' | 'po
   const pool = state.pool.findIndex(j => canHit(state, j.color, size))
   if (pool >= 0) return { source: 'pool', index: pool }
   const lane = state.lanes.findIndex(l => l[0] && canHit(state, l[0].color, size))
-  if (lane >= 0 && state.pool.length + state.swimmers.length < POOL_SIZE) return { source: 'lane', index: lane }
-  if (!state.swimmers.length && state.pool.length < POOL_SIZE) {
+  if (lane >= 0 && state.pool.length + state.swimmers.length < state.poolSize) return { source: 'lane', index: lane }
+  if (!state.swimmers.length && state.pool.length < state.poolSize) {
     const blockedLane = state.lanes.findIndex(l => l.length > 0)
     if (blockedLane >= 0) return { source: 'lane', index: blockedLane }
   }
