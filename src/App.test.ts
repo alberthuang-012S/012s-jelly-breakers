@@ -93,6 +93,9 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes[0].length - 1)
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('隊首')
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('發泡泡')
+  await click('.queue-preview nav button:nth-child(2)')
+  expect(host.querySelector('.queue-preview nav button:nth-child(2)')!.getAttribute('aria-pressed')).toBe('true')
+  expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes[1].length)
   const before = host.querySelector('.dock-capacity')!.textContent
   await act(() => vi.advanceTimersByTime(20000))
   expect(host.querySelector('.dock-capacity')!.textContent).toBe(before)
@@ -119,7 +122,7 @@ it('removes hints from controls and shows no-undo challenges without automatic l
   localStorage.setItem(TIDE_SAVE_KEY, '[1]')
   localStorage.setItem('jellyOrbitRecordsV1', '{"1":{"bestLaunches":10,"bestCombo":6,"noHint":true,"efficient":true}}')
   await act(() => root.render(createElement(App)))
-  expect(host.querySelectorAll('.game-tools button')).toHaveLength(2)
+  expect(host.querySelectorAll('.game-tools button')).toHaveLength(3)
   expect(host.querySelector('.game-tools')!.textContent).not.toContain('提示')
   await click('.nav-button')
   await click('.stage-map-entry')

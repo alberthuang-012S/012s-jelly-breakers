@@ -1,0 +1,159 @@
+/* The board receives the space left after the persistent controls, not page height. */
+html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+.ocean-app {
+  height: 100dvh; min-height: 0; overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.game-screen { height: 100%; min-height: 0; display: grid; grid-template-rows: 64px minmax(0, 1fr); }
+.site-header { width: 100%; max-width: 1400px; height: 100%; padding: 0 24px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 32px; }
+.wordmark { font-size: 21px; }
+.wordmark .brand-symbol { font-size: 28px; }
+.wordmark .brand-name small { font-size: 10px; }
+.level-bar { min-width: 0; min-height: 0; padding: 0; gap: 10px; }
+.level-bar>div { min-width: 0; }
+.level-number { flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; font-size: 16px; }
+.level-bar .eyebrow { font-size: 11px; line-height: 16px; letter-spacing: .5px; }
+.level-bar h2 { font-size: 20px; line-height: 25px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-actions { gap: 4px; }
+.header-actions button { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+.main-layout { display: block; width: 100%; height: 100%; min-height: 0; max-width: 1400px; margin: 0 auto; padding: 0 16px 12px; }
+.game-shell { height: 100%; min-height: 0; padding: 12px 16px; display: grid; grid-template-rows: 24px minmax(0, 1fr); gap: 8px; border-radius: 20px; }
+.progress-summary { min-width: 0; display: grid; grid-template-rows: 16px 4px; gap: 4px; }
+.progress-row { margin: 0; line-height: 16px; font-size: 11px; }
+.progress-row>span:last-child, .progress-row b { font-size: 11px; }
+.progress-track { margin: 0; height: 4px; }
+.game-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; min-height: 0; min-width: 0; }
+.board-panel { min-height: 0; min-width: 0; display: grid; grid-template-rows: 44px minmax(0, 1fr) 20px; }
+.mechanic-bar { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.mechanic-note { flex: 1; color: #637d77; font-size: 12px; }
+.mechanic-bar button { height: 44px; min-height: 44px; min-width: 44px; margin: 0; padding: 4px 8px; font-size: 12px; border-radius: 10px; }
+.mechanic-bar .ice-counter { flex-shrink: 0; background: #edf5f0; }
+.mechanic-bar .focus-reset { background: #edf5f0; color: #416d61; margin-left: auto; }
+.mechanic-bar .shell-tracker { display: flex; flex: 1; flex-wrap: nowrap; gap: 6px; margin: 0; min-width: 0; }
+.mechanic-bar .shell-tracker>button { display: flex; align-items: center; justify-content: center; flex: 1; gap: 6px; padding: 4px; white-space: nowrap; }
+.shell-tracker>button b { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: #fff7ed; font-size: 10px; }
+.board-viewport { min-width: 0; min-height: 0; display: grid; place-items: center; container-type: size; }
+.ocean-app .board-viewport .playfield {
+  width: min(calc(100cqw - 32px), calc(100cqh - 32px)); height: auto;
+  min-width: 0; max-width: 760px; max-height: 100%; margin: 0; aspect-ratio: 1;
+}
+.swimmer .jelly-art { width: 44px; height: 44px; }
+.swimmer .jelly-art.small b { min-width: 20px; height: 20px; font-size: 11px; }
+.pixel .pearl-mark, .pixel .shell-mark { font-size: clamp(8px, 2.2cqh, 11px); }
+.pixel .ice-mark { font-size: clamp(8px, 2.2cqh, 12px); }
+.board-panel .orbit-status {
+  position: static; min-height: 0; height: 20px; padding: 0; margin: 0; font-size: 11px;
+  line-height: 20px; letter-spacing: 0; backdrop-filter: none; z-index: auto; color: #637d77;
+}
+.board-panel .orbit-status>span:last-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.board-panel .orbit-status.has-notice { color: #876831; }
+.controls-panel { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(124px, 1fr) 44px; gap: 12px; padding: 12px; border: 1px solid #e2ebe1; border-radius: 18px; background: #f7faf5; }
+.ocean-app .dock { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 20px 60px; gap: 8px 4px; padding: 8px; margin: 0; border-radius: 12px; }
+.dock .section-label { min-width: 0; gap: 4px; }
+.dock .section-label h3 { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+.dock .dock-available { font-size: 10px; white-space: nowrap; }
+.dock .dock-available b { font-size: 15px; margin: 0; }
+.ocean-app .dock .dock-capacity { grid-column: 2; grid-row: 1; margin: 0; font-size: 10px; line-height: 20px; white-space: nowrap; }
+.ocean-app .dock-slots { grid-column: 1 / -1; margin: 0; gap: 4px; }
+.ocean-app .dock-slot { height: 60px; gap: 2px; padding: 3px 0; border-radius: 9px; }
+.ocean-app .dock-slot .jelly-art { width: 36px; height: 36px; }
+.ocean-app .dock-slot .jelly-art b { height: 18px; min-width: 18px; font-size: 10px; }
+.ocean-app .dock .dock-slot .dock-slot-label { font-size: 10px; line-height: 14px; }
+.ocean-app .dock-slot .dock-berth { width: 34px; height: 36px; }
+.queue-section { align-self: center; margin: 0; min-width: 0; }
+.queue-section .section-label { height: 20px; }
+.queue-section .section-label h3 { font-size: 12px; }
+.queue-section .section-label small { font-size: 10px; color: #637d77; }
+.lanes { margin: 4px 0 0; gap: 8px; }
+.lane { padding: 0; }
+.launch-button { height: 84px; padding: 3px 4px; justify-content: center; border-radius: 12px; }
+.launch-button .jelly-art { width: 54px; height: 48px; }
+.launch-button .jelly-art b { height: 20px; min-width: 20px; font-size: 12px; }
+.launch-button>span:last-child { font-size: 11px; width: 100%; }
+.lane-sequence { height: 16px; min-height: 16px; margin-top: 4px; align-items: center; gap: 3px; }
+.lane-sequence span { width: 10px; height: 10px; flex-shrink: 0; }
+.lane-sequence small { font-size: 10px; color: #637d77; }
+.lane-empty { height: 104px; border-radius: 12px; font-size: 18px; }
+.lane-empty small { margin-top: 4px; font-size: 10px; }
+.game-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); height: 44px; padding: 0; margin: 0; gap: 4px; border: 0; }
+.game-tools button { height: 44px; min-height: 44px; padding: 4px; font-size: 12px; gap: 4px; border: 1px solid #dfe9df; background: #fffefa; border-radius: 10px; }
+.game-tools button>span { font-size: 18px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0 !important; margin: -1px !important; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.modal-backdrop { padding: 16px; }
+.modal { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+.stage-help { margin-top: 18px; padding: 12px; background: #f0f7f3; border-radius: 12px; }
+.stage-help p { margin-top: 6px; font-size: 13px; line-height: 1.7; color: #637d77; }
+@media (max-width: 1050px) {
+  .site-header { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 0 16px; }
+  .site-header .wordmark { display: none; }
+}
+@media (max-width: 799px) and (orientation: portrait) {
+  .game-screen { grid-template-rows: 56px minmax(0, 1fr); }
+  .site-header { padding: 0 10px; }
+  .header-actions .nav-button { width: 44px; padding: 4px; justify-content: center; font-size: 20px; }
+  .nav-label { display: none; }
+  .level-bar h2 { font-size: 18px; }
+  .level-number { width: 32px; height: 36px; font-size: 14px; }
+  .main-layout { padding: 0 8px 8px; }
+  .game-shell { padding: 8px; gap: 6px; border-radius: 16px; }
+  .game-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 6px; }
+  .controls-panel { grid-template-rows: auto auto 44px; padding: 0; gap: 6px; border: 0; background: transparent; }
+  .ocean-app .dock { grid-template-rows: 18px 52px; row-gap: 4px; padding: 6px; }
+  .ocean-app .dock-slot { height: 52px; gap: 0; padding: 2px 0; }
+  .ocean-app .dock-slot .jelly-art { width: 32px; height: 32px; }
+  .ocean-app .dock-slot .dock-berth { height: 32px; }
+  .queue-section .section-label { height: 16px; }
+  .launch-button { height: 64px; }
+  .launch-button .jelly-art { width: 44px; height: 38px; }
+  .lane-empty { height: 84px; }
+  .mechanic-bar { gap: 4px; }
+  .mechanic-bar .shell-tracker { gap: 4px; }
+  .mechanic-bar button { font-size: 11px; padding: 4px; }
+}
+/* Short viewports preserve 44px targets by reducing artwork and decoration. */
+@media (max-height: 700px) and (max-width: 799px), (max-height: 600px) {
+  .game-screen { grid-template-rows: 48px minmax(0, 1fr); }
+  .site-header { padding: 0 8px; }
+  .main-layout { padding: 0 6px 6px; }
+  .game-shell { padding: 6px; gap: 4px; }
+  .controls-panel { grid-template-rows: auto minmax(66px, 1fr) 44px; gap: 4px; padding: 4px; }
+  .ocean-app .dock { grid-template-rows: 16px 44px; padding: 4px; gap: 4px 2px; }
+  .ocean-app .dock-slots { gap: 2px; }
+  .ocean-app .dock-slot { height: 44px; padding: 1px 0; }
+  .ocean-app .dock-slot .jelly-art { width: 28px; height: 28px; }
+  .ocean-app .dock-slot .dock-berth { height: 26px; }
+  .ocean-app .dock .dock-slot .dock-slot-label { font-size: 9px; line-height: 12px; }
+  .dock .section-label h3, .dock .dock-available { font-size: 10px; }
+  .dock .dock-available b { font-size: 12px; }
+  .ocean-app .dock .dock-capacity { font-size: 9px; line-height: 16px; }
+  .queue-section .section-label { display: none; }
+  .lanes { margin: 0; gap: 4px; }
+  .launch-button { height: 48px; flex-direction: row; gap: 2px; padding: 2px; }
+  .launch-button .jelly-art { width: 32px; height: 32px; flex-shrink: 0; }
+  .launch-button .jelly-art b { height: 17px; min-width: 17px; font-size: 10px; }
+  .launch-button>span:last-child { width: auto; font-size: 10px; gap: 2px; }
+  .launch-button i { display: none; }
+  .lane-empty { height: 66px; }
+  .lane-sequence { height: 14px; min-height: 14px; margin-top: 4px; gap: 2px; }
+  .lane-sequence span { width: 8px; height: 8px; }
+  .lane-sequence small { font-size: 9px; }
+  .swimmer .jelly-art { width: 32px; height: 32px; }
+  .pause-cover { gap: 8px; }
+  .pause-cover>span { font-size: 12px; letter-spacing: 1px; }
+  .pause-cover .primary { min-height: 44px; padding: 8px; font-size: 10px; }
+}
+@media (max-height: 700px) and (max-width: 799px) and (orientation: portrait) {
+  .controls-panel { grid-template-rows: auto auto 44px; padding: 0; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .game-workspace { grid-template-columns: minmax(0, 1fr) 260px; gap: 8px; }
+  .header-actions .nav-button { width: 44px; padding: 4px; justify-content: center; }
+  .nav-label { display: none; }
+  .level-bar h2 { font-size: 18px; }
+}
+@media (max-width: 359px) {
+  .level-number { display: none; }
+  .level-bar h2 { font-size: 16px; }
+  .level-bar .eyebrow { font-size: 10px; }
+  .game-tools button { font-size: 11px; }
+}
