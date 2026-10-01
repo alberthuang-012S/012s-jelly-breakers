@@ -22,7 +22,8 @@ export function StageSelect({ levels, completedLevels, highestUnlockedLevel, onS
         </div>
         <div className="brand-lockup">
           <span className="brand-kicker">012S · JELLY SERIES</span>
-          <h1>Jelly <span>Orbit</span></h1>
+          <h1>Jelly <span>Breakers</span></h1>
+          <p>水母破陣</p>
           <p>Read the layers. Choose the colour. Let the orbit do the work.</p>
         </div>
         <div className="hero-jelly-stack" aria-hidden="true">

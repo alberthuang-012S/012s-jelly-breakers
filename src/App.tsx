@@ -204,11 +204,11 @@ export default function App() {
   return <div className="ocean-app">
     <div inert={Boolean(overlay) || game.phase !== 'playing'}>
     <header className="site-header">
-      <a className="wordmark" href="#" onClick={e => { e.preventDefault(); openMap() }} aria-label="Jelly Orbit 關卡圖鑑"><span className="brand-symbol" aria-hidden="true">✳</span> jelly<span>orbit</span></a>
+      <a className="wordmark" href="#" onClick={e => { e.preventDefault(); openMap() }} aria-label="Jelly Breakers 水母破陣 關卡圖鑑"><span className="brand-symbol" aria-hidden="true">✳</span><span className="brand-name"><strong>Jelly Breakers</strong><small>水母破陣</small></span></a>
       <div className="header-actions"><button className="nav-button" onClick={() => { openMap() }}><span aria-hidden="true">▦</span> 關卡圖鑑</button><button className="circle-button" onClick={() => setOverlay('help')} aria-label="遊戲說明">?</button></div>
     </header>
     <main className="main-layout">
-      <section className="game-shell" aria-label="Jelly Orbit 遊戲">
+      <section className="game-shell" aria-label="Jelly Breakers 水母破陣 遊戲">
         <div className="level-bar"><span className="level-number" aria-hidden="true">{String(number).padStart(2, '0')}</span><div><span className="eyebrow">{DIFFICULTY_NAMES[difficulty]} · 第 {String(number).padStart(2, '0')} 關</span><h2>{level.name}</h2></div><button className="circle-button" onClick={() => setPaused(p => !p)} aria-label={paused ? '繼續遊戲' : '暫停遊戲'}>{paused ? '▶' : 'Ⅱ'}</button></div>
         {(level.puzzle || level.brand) && <p className="stage-rule">{level.subtitle}</p>}
         <div className="progress-row"><span>海洋修復 <b>{progress}%</b></span>{iceLeft > 0 && <button className="ice-counter" aria-pressed={boardFocus === 'ice'} onClick={() => setBoardFocus(f => f === 'ice' ? 'all' : 'ice')}>❄ {iceLeft} 層冰 · 高亮</button>}</div><div className="progress-track" role="progressbar" aria-label="海洋修復進度" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div style={{ width: `${progress}%` }} /></div>

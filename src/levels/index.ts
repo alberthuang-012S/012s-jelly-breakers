@@ -219,6 +219,6 @@ export const LEVELS: LevelDefinition[] = [
 
 export function getLevel(levelId: number): LevelDefinition {
   const level = LEVELS.find((candidate) => candidate.id === levelId)
-  if (!level) throw new Error(`Unknown Jelly Orbit level: ${levelId}`)
+  if (!level) throw new Error(`Unknown Jelly Breakers level: ${levelId}`)
   return level
 }

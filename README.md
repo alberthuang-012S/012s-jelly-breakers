@@ -1,4 +1,4 @@
-# Jelly Orbit · 水母的海洋小旅行
+# Jelly Breakers 水母破陣
 
 A three-hundred-stage, mobile-first ocean puzzle with Easy, Normal and Hard journeys of one hundred stages each. Send jellyfish around a moving track, reveal matching colors, and collect ocean pixel art.
 
@@ -75,7 +75,7 @@ pnpm typecheck
 pnpm build
 ```
 
-The production Vite build uses `/012s-jelly-orbit/` as its GitHub Pages base when the GitHub Actions environment is detected. Local development uses `/`.
+The production Vite build uses `/012s-jelly-breakers/` as its GitHub Pages base when the GitHub Actions environment is detected. Local development uses `/`.
 
 ## Deployment
 
@@ -83,4 +83,4 @@ The production Vite build uses `/012s-jelly-orbit/` as its GitHub Pages base whe
 
 Expected URL:
 
-<https://alberthuang-012s.github.io/012s-jelly-orbit/>
+<https://alberthuang-012s.github.io/012s-jelly-breakers/>

@@ -3,7 +3,7 @@ import { LEVELS } from '../levels'
 import { solveLevel } from './solver'
 import { validateLevels } from './validator'
 
-describe('Jelly Orbit hand-authored levels', () => {
+describe('Jelly Breakers hand-authored levels', () => {
   it('contains 15 levels', () => {
     expect(LEVELS).toHaveLength(15)
   })

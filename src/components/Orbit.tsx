@@ -3,7 +3,7 @@ import { JellyVisual } from './Jelly'
 
 export function Orbit({ activeJelly, resolving, attackCount = 0, attackIndex = 0 }: { activeJelly: JellyUnit | null; resolving: boolean; attackCount?: number; attackIndex?: number }) {
   return (
-    <div className={`orbit-scene ${resolving ? 'orbit-scene--resolving' : ''}`} aria-label="Jelly Orbit">
+    <div className={`orbit-scene ${resolving ? 'orbit-scene--resolving' : ''}`} aria-label="Jelly Breakers 水母破陣">
       <div className="orbit-halo" />
       <div className="orbit-ring orbit-ring--outer" />
       <div className="orbit-ring orbit-ring--inner" />

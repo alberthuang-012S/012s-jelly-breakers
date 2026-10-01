@@ -1,8 +1,11 @@
 /* Quiet interface: vivid game pieces, restrained surrounding controls. */
 :root { color: #294f54; background: #f6f8f5; --muted: #637d77; }
 .ocean-app { background: radial-gradient(ellipse at 50% 25%, #e8f1ec 0, transparent 65%), #f6f8f5; }
-.site-header { max-width: 1040px; height: 64px; padding: 0 32px; border: 0; }
+.site-header { max-width: 1040px; height: 64px; padding: 0 32px; border: 0; gap: 8px; }
 .wordmark { font-size: 25px; gap: 4px; }
+.wordmark .brand-name { display: flex; flex-direction: column; gap: 3px; line-height: 1.15; white-space: nowrap; }
+.wordmark .brand-name strong { font-weight: 900; letter-spacing: -.8px; }
+.wordmark .brand-name small { display: block; align-self: flex-start; margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 2px; }
 .wordmark .brand-symbol { font-size: 32px; color: #568f80; }
 .header-actions { gap: 12px; }
 .nav-button { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 12px; background: transparent; color: #526f68; font-size: 14px; }
@@ -138,7 +141,7 @@
 }
 @media(max-width:360px) {
   .site-header { padding: 0 12px; }
-  .wordmark { font-size: 20px; }
+  .wordmark { font-size: 18px; }
   .nav-button { font-size: 12px; gap: 4px; }
   .main-layout { padding: 0 8px; }
   .game-shell { padding-left: 12px; padding-right: 12px; }
