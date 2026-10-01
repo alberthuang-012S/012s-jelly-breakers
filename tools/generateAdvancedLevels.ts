@@ -4,56 +4,59 @@ import { writeFileSync } from 'node:fs'
 import { COLORS, canHit, createTide, launch, stepTide } from '../src/game/tide'
 import type { Difficulty, TideLevel, TideState } from '../src/game/tide'
 import type { JellyUnit } from '../src/game/types'
+import { artworkDepths, colorArtwork, makeArtwork } from '../src/game/artwork'
+import { artworkShells } from '../src/game/campaign'
 
-const motifs = ['珊瑚圓環', '菱晶之海', '海藍方舟', '星形潮灣', '花瓣祕境', '雙翼海礁', '珍珠穹頂', '月光海扇', '深海羅盤', '海光王冠']
 function settle(state: TideState, size: number): TideState {
   for (let t = 0; state.swimmers.length && state.phase === 'playing' && t < size * 8 + 16; t++) state = stepTide(state, size)
   return state
 }
 function makeBoard(difficulty: Difficulty, number: number): TideLevel {
   const hard = difficulty === 'hard', chapter = Math.floor((number - 1) / 10), position = (number - 1) % 10
-  // Chapter finales combine mechanics; positions 4 and 8 provide breathing room.
-  const calm = position === 3 || position === 7
+  // Brand finales are collectible pauses; positions 4 and 8 also ease pressure.
+  const calm = position === 3 || position === 7 || position === 9
   const size = hard ? number <= 3 ? 10 : number <= 10 ? 12 : 14 : 12, id = (hard ? 200 : 100) + number
   const palette = COLORS.map((_, i) => COLORS[(i + chapter + position) % 5])
-  const tiles: TideLevel['tiles'] = [], ice: number[] = [], depths: number[] = []
-  for (let row = 0; row < size; row++) for (let col = 0; col < size; col++) {
-    const x = (col - (size - 1) / 2) / (size / 2) + (position % 3 - 1) * .035,
-      y = (row - (size - 1) / 2) / (size / 2) + (Math.floor(position / 3) - 1) * .025
-    const angle = Math.atan2(y, x), circle = Math.hypot(x, y)
-    const metrics = [circle, (Math.abs(x) + Math.abs(y)) / 1.2, Math.max(Math.abs(x) * 1.08, Math.abs(y) * .92),
-      circle / (1 + .13 * Math.cos(5 * angle)), circle / (1 + .12 * Math.cos(4 * angle)),
-      Math.hypot(x * .85, y * 1.15), Math.hypot(x * 1.12, y * .86),
-      Math.max(Math.abs(x), Math.abs(y)) + .15 * Math.abs(x * y),
-      circle / (1 + .1 * Math.cos(8 * angle)), circle / (1 + .12 * Math.sin(3 * angle))]
-    const radius = metrics[chapter] / (.89 + position * .012)
-    const depth = radius > 1 ? -1 : radius > .84 ? 0 : radius > .66 ? 1 : radius > .46 ? 2 : radius > .23 ? 3 : 4
-    depths.push(depth)
-    // Later chapters weave different colors into the middle bands, changing entrances.
-    const weave = chapter >= 2 && depth === 2 && (row + col + position) % (hard ? 3 : 5) === 0
-    tiles.push(depth < 0 ? null : palette[hard && number <= 3 && depth === 4 ? 3 : weave ? 3 : depth])
-    const iceEnabled = hard ? number >= 4 : chapter >= 2
-    const iceSpacing = hard && number <= 10 ? 9 : calm ? 9 : hard ? 4 : 7
-    ice.push(depth >= 0 && iceEnabled && (row * 3 + col + number) % iceSpacing === 0 ? 1 : 0)
-  }
+  const art = makeArtwork(number, size), depths = artworkDepths(art.mask, size)
+  const tiles = colorArtwork(art, depths, hard && number <= 3 ? palette.slice(0, 4) : palette, size)
+  const iceEnabled = hard ? number >= 4 : chapter >= 2
+  const iceSpacing = hard && number <= 10 ? 9 : calm ? 9 : hard ? 4 : 7
+  const ice = depths.map((d, i) => d >= 0 && iceEnabled && (Math.floor(i / size) * 3 + i % size + number) % iceSpacing === 0 ? 1 : 0)
   const groupCount = hard ? number <= 6 ? 0 : number <= 10 ? 1 : (calm ? 2 : chapter >= 4 ? 3 : 2) : chapter < 2 ? 0 : chapter < 6 || calm ? 1 : 2
-  const shells: TideLevel['shells'] = []
-  for (let group = 0; group < groupCount; group++) {
-    const keys = depths.flatMap((depth, index) => depth === group + 1 ? [index] : [])
-    const cells = depths.flatMap((depth, index) => depth === group + 2 ? [index] : [])
-    // Keys in a later group may be inside an earlier shell: dependencies always go inward.
-    const first = (number * 3 + group * 7) % keys.length
-    const pearls = [...new Set([keys[first], keys[(first + Math.floor(keys.length / 2)) % keys.length]])]
-    shells.push({ id: String(group + 1), pearls, cells })
+  const shells = artworkShells(art, depths, groupCount)
+  const puzzleEnabled = !calm && (hard ? number >= 11 : number >= 21)
+  const puzzle: TideLevel['puzzle'] = !puzzleEnabled ? undefined : position % 3 === 0 ? 'dual-entry' : position % 3 === 1 ? 'ice-gate' : 'split-pearls'
+  if (puzzle === 'dual-entry') {
+    // Two exposed fronts protect different parts of the silhouette. Inner
+    // colors remain hidden until the player opens one of those approaches.
+    for (let i = 0; i < tiles.length; i++) if (tiles[i]) {
+      tiles[i] = depths[i] === 0 ? palette[i % size < size / 2 ? 0 : 1]
+        : palette[2 + (depths[i] + Math.floor(i / size / 3)) % 3]
+    }
   }
-  return { id, difficulty, poolSize: hard ? 4 : 5, name: `${motifs[chapter]}・${position + 1}`,
-    subtitle: hard ? '先想好解鎖順序，替返航夥伴保留空位。' : '觀察三條隊伍，留空位給還沒露出的顏色。',
-    icon: hard ? '✧' : '◈', size, tiles, ice, shells, lanes: [[], [], []], par: 0 }
+  if (puzzle === 'ice-gate') {
+    // Concentrate ice at visible entrances and pearl keys instead of scattering
+    // every frozen tile uniformly. The ordinary two-hit ice rule stays intact.
+    for (let i = 0; i < tiles.length; i++) if (depths[i] === 0 && (Math.floor(i / size) + i % size) % 3 === 0) ice[i] = 1
+    for (const shell of shells) for (const key of shell.pearls) ice[key] = 1
+  }
+  if (puzzle === 'split-pearls') for (const [group, shell] of shells.entries()) {
+    const keys = depths.flatMap((d, i) => d === group ? [i] : [])
+    shell.pearls = [...new Set([keys[0], keys[Math.floor(keys.length / 2)], keys[keys.length - 1]])]
+  }
+  return { id, difficulty, poolSize: hard ? 4 : 5, name: art.name, family: art.family, brand: art.brand,
+    subtitle: art.brand ? `${art.brand} 海洋紀念：解開字元，把未來收進圖鑑。`
+      : puzzle === 'dual-entry' ? '兩側入口有不同顏色，先選一條路替內層開道。'
+      : puzzle === 'ice-gate' ? '入口與珍珠被冰封了，先破冰再打開航道。'
+      : puzzle === 'split-pearls' ? '珍珠分散在不同位置，收齊同號鑰匙才會開門。'
+      : hard ? '從輪廓與缺口規劃解鎖順序，替返航夥伴保留空位。' : '觀察圖案的留白與三條隊伍，替下一個顏色開路。',
+    icon: art.brand ? '✦' : hard ? '✧' : '◈', puzzle, size, tiles, ice, shells, lanes: [[], [], []], par: 0 }
 }
 function author(level: TideLevel): TideLevel {
   const number = (level.id - 1) % 100 + 1, chapter = Math.floor((number - 1) / 10)
-  const hard = level.difficulty === 'hard', calm = [3, 7].includes((number - 1) % 10)
-  const cap = hard ? (calm ? 10 : chapter < 4 ? 8 : 6) : (calm ? 12 : chapter < 4 ? 12 : chapter < 7 ? 10 : 8)
+  const hard = level.difficulty === 'hard', calm = [3, 7, 9].includes((number - 1) % 10)
+  const cap = hard ? (calm ? 10 : number <= 10 ? 8 : chapter < 5 ? 6 : 4)
+    : calm ? 12 : level.puzzle === 'dual-entry' ? 6 : chapter < 4 ? 12 : chapter < 7 ? 10 : 8
   let state = createTide(level)
   const units: JellyUnit[] = []
   // Find a constructive route using the actual firing/ice/shell simulation.
@@ -71,11 +74,12 @@ function author(level: TideLevel): TideLevel {
   if (state.phase !== 'won') throw new Error(`Unfinished board ${level.id}`)
   const initial = createTide(level)
   const hidden = units.filter(j => !canHit(initial, j.color, level.size))
-  const forcedCount = hard && number > 3 && !calm ? 2 : 1
-  if (hidden.length < level.poolSize!) throw new Error(`Insufficient planning choices ${level.id}`)
+  // Open lettering and thin silhouettes are deliberately calmer stages. Dense
+  // creatures retain the blocked-head/docking puzzle without thickening the art.
+  const forcedCount = Math.min(hidden.length, hard && number > 3 && !calm ? 2 : 1)
   // One lane offers initially blocked inner colors. Overfilling it is a real losing route.
   // The other two carry the reference order; selected inner units need temporary docks.
-  const pendingCount = level.poolSize! - forcedCount
+  const pendingCount = Math.min(Math.max(0, hidden.length - forcedCount), level.poolSize! - forcedCount)
   const pending = hidden.slice(0, pendingCount)
   // Unlike the optional risky lane, these inner units block required outer ammo.
   // A winning player must temporarily dock them to uncover that queue.

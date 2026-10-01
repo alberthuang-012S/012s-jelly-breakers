@@ -1,6 +1,7 @@
 import type { JellyColor, JellyUnit } from './types'
 import { buildCampaignLevels, makeLanes } from './campaign'
 import advancedLevels from './advancedLevels.json'
+import type { ArtFamily } from './artwork'
 
 export const COLORS: JellyColor[] = ['yellow', 'pink', 'aqua', 'green', 'purple']
 export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '檸檬', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
@@ -10,7 +11,7 @@ export type ShellGroup = { id: string; pearls: number[]; cells: number[] }
 export type Difficulty = 'easy' | 'normal' | 'hard'
 export const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard']
 export const DIFFICULTY_NAMES: Record<Difficulty, string> = { easy: '簡單', normal: '普通', hard: '困難' }
-export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; shells: ShellGroup[]; lanes: JellyUnit[][]; par: number; difficulty?: Difficulty; poolSize?: number; solution?: string[] }
+export type TideLevel = { id: number; name: string; subtitle: string; icon: string; size: number; tiles: Tile[]; ice: number[]; shells: ShellGroup[]; lanes: JellyUnit[][]; par: number; difficulty?: Difficulty; poolSize?: number; solution?: string[]; family?: ArtFamily; brand?: '012S' | '2050'; puzzle?: 'dual-entry' | 'ice-gate' | 'split-pearls' }
 export type Swimmer = JellyUnit & { age: number }
 export type Shot = { id: string; color: JellyColor; from: [number, number]; target: number; sourceId: string; tick: number; cracked: boolean }
 export type TideState = { tiles: Tile[]; ice: number[]; shells: ShellGroup[]; openedShells: string[]; lanes: JellyUnit[][]; pool: JellyUnit[]; poolSize: number; swimmers: Swimmer[]; tick: number; shots: Shot[]; effects: Shot[]; combo: number; bestCombo: number; lastHitTick: number; clearedColors: JellyColor[]; phase: 'playing' | 'won' | 'lost'; launched: number }
@@ -121,7 +122,7 @@ function easeOpeningLevel(original: TideLevel): TideLevel {
 }
 
 const OPENING_LEVELS = ORIGINAL_LEVELS.map(easeOpeningLevel)
-export const TIDE_LEVELS = [...OPENING_LEVELS, ...buildCampaignLevels(ORIGINAL_LEVELS, OPENING_LEVELS)]
+export const TIDE_LEVELS = [...OPENING_LEVELS, ...buildCampaignLevels()]
 export const ALL_LEVELS: TideLevel[] = [...TIDE_LEVELS, ...advancedLevels as TideLevel[]]
 export function levelsFor(difficulty: Difficulty): TideLevel[] {
   return ALL_LEVELS.filter(level => (level.difficulty ?? 'easy') === difficulty)

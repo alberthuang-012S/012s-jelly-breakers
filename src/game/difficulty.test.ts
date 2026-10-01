@@ -49,10 +49,11 @@ describe('three independent hundred-stage journeys', () => {
       expect(state.launched).toBeLessThanOrEqual(level.par)
       expect([...state.pool, ...state.lanes.flat(), ...state.swimmers]).toHaveLength(0)
     })
-    it(`${level.difficulty} ${stageNumber(level)} can fail from filling docks with blocked colors`, () => {
+    it(`${level.difficulty} ${stageNumber(level)} docks blocked colors and only loses when all slots are filled`, () => {
       let state = createTide(level)
       const original = structuredClone(state)
-      for (let i = 0; i < state.poolSize; i++) {
+      const blockedCount = Math.min(state.poolSize, state.lanes.flat().filter(j => !canHit(state, j.color, level.size)).length)
+      for (let i = 0; i < blockedCount; i++) {
         const lane = state.lanes.findIndex(l => l[0] && !canHit(state, l[0].color, level.size))
         expect(lane).toBeGreaterThanOrEqual(0)
         const previous = state
@@ -67,9 +68,19 @@ describe('three independent hundred-stage journeys', () => {
         }
       }
       expect(state.tiles).toEqual(original.tiles)
-      expect(state.pool).toHaveLength(state.poolSize)
+      expect(state.pool).toHaveLength(blockedCount)
+      expect(state.phase).toBe(blockedCount === state.poolSize ? 'lost' : 'playing')
     })
   }
+  it('retains dock-pressure puzzles alongside open silhouettes and lettering', () => {
+    for (const [difficulty, minimum] of [['normal', 60], ['hard', 85]] as const) {
+      const risky = levelsFor(difficulty).filter(level => {
+        const state = createTide(level)
+        return state.lanes.flat().filter(j => !canHit(state, j.color, level.size)).length >= state.poolSize
+      })
+      expect(risky.length).toBeGreaterThanOrEqual(minimum)
+    }
+  })
   it('enforces hard-mode reservations while allowing a full dock to relaunch', () => {
     const state = createTide(levelsFor('hard')[0])
     expect(state.poolSize).toBe(4)

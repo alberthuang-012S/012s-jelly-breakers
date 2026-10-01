@@ -210,6 +210,7 @@ export default function App() {
     <main className="main-layout">
       <section className="game-shell" aria-label="Jelly Orbit 遊戲">
         <div className="level-bar"><span className="level-number" aria-hidden="true">{String(number).padStart(2, '0')}</span><div><span className="eyebrow">{DIFFICULTY_NAMES[difficulty]} · 第 {String(number).padStart(2, '0')} 關</span><h2>{level.name}</h2></div><button className="circle-button" onClick={() => setPaused(p => !p)} aria-label={paused ? '繼續遊戲' : '暫停遊戲'}>{paused ? '▶' : 'Ⅱ'}</button></div>
+        {(level.puzzle || level.brand) && <p className="stage-rule">{level.subtitle}</p>}
         <div className="progress-row"><span>海洋修復 <b>{progress}%</b></span>{iceLeft > 0 && <button className="ice-counter" aria-pressed={boardFocus === 'ice'} onClick={() => setBoardFocus(f => f === 'ice' ? 'all' : 'ice')}>❄ {iceLeft} 層冰 · 高亮</button>}</div><div className="progress-track" role="progressbar" aria-label="海洋修復進度" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div style={{ width: `${progress}%` }} /></div>
         <div className="board-tools"><span>{boardFocus === 'all' ? '圓珠是鑰匙，扇形是貝殼；藍角標代表冰封。' : '已高亮選定機關'}</span>{boardFocus !== 'all' && <button onClick={() => setBoardFocus('all')}>顯示全部</button>}</div><div className={`playfield ${paused || overlay || hidden ? 'is-paused' : ''} ${level.shells.length ? 'pearl-field' : level.ice.some(Boolean) ? 'frost-field' : ''}`}>
 

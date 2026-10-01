@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jelly Orbit · 圖案檢視</title>
+<style>
+  * { box-sizing: border-box } body { margin: 0; padding: 24px; background: #eef9fa; color: #244651; font-family: system-ui, sans-serif }
+  h1 { margin: 0 0 8px; font-size: 24px } p { margin: 0 0 18px; color: #52747b }
+  nav { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px } select { padding: 9px; border-radius: 8px; border: 1px solid #bad5d8; background: white }
+  main { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px }
+  article { background: white; padding: 15px; border-radius: 16px; border: 1px solid #d7e9eb; text-align: center }
+  article.brand { background: #fff7e1; border-color: #f4cf75 } .art { display: grid; width: 140px; height: 140px; margin: auto; gap: 1px }
+  .art i { border-radius: 2px } h2 { font-size: 14px; margin: 12px 0 5px } small { color: #63828a; font-size: 12px }
+</style>
+<h1>012S · Jelly Orbit 海洋圖鑑</h1>
+<p>多樣輪廓與開路挑戰。每個難度僅第 50 關 012S、第 100 關 2050 為品牌紀念。</p>
+<nav><label>難度 <select id="difficulty"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option></select></label><label>章節 <select id="chapter"><option value="highlights">新造型與挑戰精選</option><option value="intro">前兩章 · 海洋造型</option><option value="all">全部 100 關</option></select></label></nav>
+<main></main>
+<script type="module">
+  import { levelsFor, HEX, stageNumber } from '/src/game/tide.ts'
+  import { CHAPTER_NAMES } from '/src/game/campaign.ts'
+  const difficulty = document.querySelector('#difficulty'), chapter = document.querySelector('#chapter')
+  const families = { creature: '海洋生物', object: '探索物件', asymmetric: '非對稱', negative: '留白與分離', brand: '品牌紀念' }
+  const puzzles = { 'dual-entry': '雙色入口', 'ice-gate': '冰封航道', 'split-pearls': '分散珍珠' }
+  CHAPTER_NAMES.forEach((name, i) => { const option = document.createElement('option'); option.value = i; option.textContent = `${i + 1} · ${name}`; chapter.append(option) })
+  function render() {
+    const highlights = [10, 11, 12, 13, 20, 21, 22, 23, 25, 40, 50, 100]
+    document.querySelector('main').replaceChildren(...levelsFor(difficulty.value).filter(l => chapter.value === 'all' || (chapter.value === 'highlights' ? highlights.includes(stageNumber(l)) : chapter.value === 'intro' ? stageNumber(l) <= 20 : Math.floor((stageNumber(l) - 1) / 10) === Number(chapter.value))).map(l => {
+      const card = document.createElement('article'); card.className = l.brand ? 'brand' : ''
+      const art = document.createElement('div'); art.className = 'art'; art.style.gridTemplateColumns = `repeat(${l.size}, 1fr)`; art.setAttribute('role', 'img'); art.setAttribute('aria-label', l.name)
+      art.replaceChildren(...l.tiles.map(color => { const tile = document.createElement('i'); tile.style.background = color ? HEX[color] : 'transparent'; return tile }))
+      const title = document.createElement('h2'); title.textContent = `${String(stageNumber(l)).padStart(2, '0')} · ${l.name}`
+      const caption = document.createElement('small'); caption.textContent = `${families[l.family] ?? '教學圖案'} · ${l.size}×${l.size} · ${l.shells.length} 組貝殼 · ${l.ice.filter(Boolean).length} 格冰封${l.puzzle ? ' · ' + puzzles[l.puzzle] : ''}`
+      card.append(art, title, caption); return card
+    }))
+  }
+  difficulty.onchange = chapter.onchange = render; render()
+</script>
+</html>

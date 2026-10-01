@@ -1,7 +1,7 @@
 export type RunStats = { launches: number; undos: number }
 export type StageRecord = { bestLaunches: number; bestCombo: number; noUndo: boolean; efficient: boolean; noHint?: boolean }
 export type TideRecords = Record<number, StageRecord>
-const KEY = 'jellyOrbitRecordsV1'
+const KEY = 'jellyOrbitRecordsV2'
 export function parseRecords(raw: string | null): TideRecords {
   try {
     const value = JSON.parse(raw ?? '{}')
@@ -22,7 +22,12 @@ export function parseRecords(raw: string | null): TideRecords {
   } catch { return {} }
 }
 export function readRecords(): TideRecords {
-  try { return parseRecords(localStorage.getItem(KEY)) } catch { return {} }
+  try {
+    // Original tutorial stages still have the same boards. Changed stages start
+    // new bests; their historic records stay intact in the old storage key.
+    const original = Object.fromEntries(Object.entries(parseRecords(localStorage.getItem('jellyOrbitRecordsV1'))).filter(([id]) => Number(id) <= 15))
+    return { ...original, ...parseRecords(localStorage.getItem(KEY)) }
+  } catch { return {} }
 }
 export function saveRecords(records: TideRecords): void {
   try { localStorage.setItem(KEY, JSON.stringify(records)) } catch { /* Keep the current session playable. */ }
