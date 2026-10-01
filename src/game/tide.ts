@@ -4,7 +4,7 @@ import advancedLevels from './advancedLevels.json'
 import type { ArtFamily } from './artwork'
 
 export const COLORS: JellyColor[] = ['yellow', 'pink', 'aqua', 'green', 'purple']
-export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '檸檬', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
+export const COLOR_NAMES: Record<JellyColor, string> = { yellow: '芒果', pink: '蜜桃', aqua: '海藍', green: '青蘋果', purple: '葡萄' }
 export const HEX: Record<JellyColor, string> = { yellow: '#ffc947', pink: '#ff82ac', aqua: '#55d7e0', green: '#93d772', purple: '#b29aee' }
 export type Tile = JellyColor | null
 export type ShellGroup = { id: string; pearls: number[]; cells: number[] }

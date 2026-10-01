@@ -38,6 +38,8 @@ After a first clear, optional replay challenges reward finishing within the disp
 - `src/components/TideEffects.tsx`: bounded visual effects and color-clear celebrations, with reduced-motion support.
 - `src/storage/tideProgress.ts`: backwards-compatible stage completion storage and new-mechanic tutorial memory.
 - `src/App.tsx`: interface, clock, undo snapshots, local completion storage and synthesized audio.
+- `src/components/HomeScreen.tsx` and `src/home.css`: landing screen, difficulty progress, resume and secondary entry points.
+- `src/components/DepartureQueues.tsx`: queue heads, desktop unit/ammo previews and labeled mobile color sequences.
 - `src/styles.css` and `src/refined.css`: ocean styling, hit feedback and reduced-motion support.
 - `src/viewport.css`: viewport-sized game workspace, portrait/landscape layouts, persistent controls and safe-area handling.
 - Existing artwork from `reference/jellyfish-3d` is reused.
@@ -58,7 +60,11 @@ From Normal stage 21 and Hard stage 11, challenge stages alternate dual-color ex
 
 For visual review, run `pnpm dev` and open `/tools/artwork-preview.html`. The preview reads the actual catalogue and supports difficulty/chapter selection; it is an authoring tool, not part of the production game navigation.
 
-The game fits the viewport without page scrolling. Portrait phones put the return bay, three launch buttons and Undo/Queue/More below a board that uses the remaining space; desktop and landscape views put those controls on the right. Short viewports reduce artwork and decoration while preserving 44 px action targets. The layout reserves stable space for mechanisms, status messages, returning jellyfish and empty queues. At 390×844 the playfield is 324 px wide. Ice and numbered shell groups can be highlighted; Help explains the current stage. A tile shows one primary symbol plus a blue ice corner instead of overlapping labels. Up to four upcoming colors per lane and a shared, paused full-queue dialog support planning. Dialogs scroll internally. The map uses a compact chapter selector and a Continue button which preserves the current attempt when appropriate.
+The app opens on a home screen with difficulty selection, separate completion counts, a start/resume button, collection, help and settings. First-play and mechanism tutorials appear when entering the game. Returning home pauses simulation and preserves the board, queue order, stable return berths, manual pause state and undo history for the current visit. Switching the home difficulty selection away and back preserves that attempt until a different journey is actually started. Reloading opens home and uses saved completion progress; unfinished boards remain session-only.
+
+The game fits the viewport without page scrolling. Portrait phones put the return bay, three launch buttons and Undo/Queue/More below a board that uses the remaining space. Desktop uses a compact panel aligned with the board's upper edge, ordered as current rules, departure queues, return bay and tools. Large views show bigger queue heads and the next two units with ammo; compact views show a labeled left-to-right sequence of at most three colors, arrows and the additional remaining count. Short viewports reduce artwork and decoration while preserving 44 px action targets. The layout reserves stable space for mechanisms, status messages, returning jellyfish and empty queues. At 390×844 the playfield is 324 px wide. Ice and numbered shell groups can be highlighted; Help explains the current stage. A tile shows one primary symbol plus a blue ice corner instead of overlapping labels. A shared, paused full-queue dialog supports detailed planning. Dialogs scroll internally. The map uses a compact chapter selector and a Continue button which preserves the current attempt when appropriate.
+
+Active interface color names are 芒果 (yellow), 蜜桃 (pink), 海藍 (aqua), 青蘋果 (green) and 葡萄 (purple), shared by home, dispatch, queue previews and accessible labels.
 
 Responsive browser checks covered 320×568, 375×667, 390×844, 768×1024, 844×390, 568×320 and 1366×768, including a 14×14 stage with ice and three shell groups. Core controls remain in view at these sizes. Extremely small viewports trade board size for keeping the controls accessible.
 

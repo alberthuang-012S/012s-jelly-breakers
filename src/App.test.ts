@@ -28,9 +28,88 @@ async function click(selector: string) {
   expect(button!.disabled).toBe(false)
   await act(() => button!.click())
 }
+async function renderGame() {
+  await act(() => root.render(createElement(App)))
+  await click('.home-play')
+}
+it('opens on the home screen and defers the first-play tutorial until entering a journey', async () => {
+  localStorage.removeItem('jellyOrbitWelcomeV1')
+  await act(() => root.render(createElement(App)))
+  expect(host.querySelector('.home-play')!.textContent).toContain('開始冒險')
+  expect(host.querySelector('.game-screen')!.hasAttribute('hidden')).toBe(true)
+  expect(host.querySelector('[role="dialog"]')).toBeNull()
+  await click('.home-difficulties button:nth-child(3)')
+  expect(host.querySelector('.home-resume')!.textContent).toContain('困難 · 第 01 關')
+  expect(readTideProgress()).toEqual([])
+  await click('.home-play')
+  expect(host.querySelector('[role="dialog"]')!.getAttribute('aria-label')).toBe('遊戲說明')
+  expect(host.querySelector('.home-screen')).toBeNull()
+  expect(host.querySelector('.game-screen')!.hasAttribute('hidden')).toBe(false)
+  expect(host.querySelectorAll('.dock-slot')).toHaveLength(4)
+  expect(localStorage.getItem('jellyOrbitDifficultyV1')).toBe('hard')
+})
+it('pauses on home and preserves the board, lane order, berth and undo history on return', async () => {
+  localStorage.setItem('jellyOrbitDifficultyV1', 'hard')
+  await renderGame()
+  await click('.launch-button')
+  const board = host.querySelector('.pixel-board')!.innerHTML
+  const lanes = host.querySelector('.lanes')!.innerHTML
+  const reserved = host.querySelector('.dock-slot.reserved')!
+  const partner = reserved.getAttribute('data-jelly-id')
+  const berth = [...host.querySelectorAll('.dock-slot')].indexOf(reserved)
+  await click('.home-button')
+  expect(host.querySelector('.home-play')!.textContent).toContain('繼續冒險')
+  await act(() => vi.advanceTimersByTime(20000))
+  expect(host.querySelector('.pixel-board')!.innerHTML).toBe(board)
+  expect(host.querySelector('.dock-capacity')!.textContent).toContain('返航中 1')
+  await click('.home-difficulties button:nth-child(2)')
+  await click('.home-difficulties button:nth-child(3)')
+  await click('.home-play')
+  expect(host.querySelectorAll('.dock-slot')[berth].getAttribute('data-jelly-id')).toBe(partner)
+  expect(host.querySelector('.lanes')!.innerHTML).toBe(lanes)
+  await click('.game-tools button:first-child')
+  expect(host.querySelector('.dock-capacity')!.textContent).toBe('返航中 0 · 已停泊 0')
+  await click('.header-actions button[aria-label="暫停遊戲"]')
+  await click('.home-button')
+  await click('.home-play')
+  expect(host.querySelector('.pause-cover')).not.toBeNull()
+  expect(host.querySelector('.header-actions button[aria-label="繼續遊戲"]')).not.toBeNull()
+})
+it('shows separate completion counts on home and starts the next stage in the selected difficulty', async () => {
+  localStorage.setItem(TIDE_SAVE_KEY, '[1,2,101,201,202,203]')
+  await act(() => root.render(createElement(App)))
+  const choices = [...host.querySelectorAll('.home-difficulties button')]
+  expect(choices.map(b => b.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('2/100'), expect.stringContaining('1/100'), expect.stringContaining('3/100')]))
+  await click('.home-difficulties button:nth-child(2)')
+  await click('.home-links button:first-child')
+  expect(host.querySelector('.collection-summary')!.textContent).toContain('普通已收藏 1 / 100')
+  await click('.modal-close')
+  expect(host.querySelector('.home-screen')).not.toBeNull()
+  await click('.home-play')
+  expect(host.querySelector('.level-bar')!.textContent).toContain('普通 · 第 02 關')
+  expect(readTideProgress()).toEqual([1, 2, 101, 201, 202, 203])
+})
+it('names yellow mango everywhere and previews the actual next units and remaining queue count', async () => {
+  localStorage.setItem(TIDE_SAVE_KEY, JSON.stringify(Array.from({ length: 40 }, (_, i) => i + 201)))
+  localStorage.setItem('jellyOrbitDifficultyV1', 'hard')
+  await renderGame()
+  const level = levelsFor('hard')[40]
+  const lane = level.lanes[1]
+  const preview = host.querySelector('.lane:nth-child(2) .lane-sequence')!
+  expect(preview.querySelectorAll('.sequence-dot')).toHaveLength(3)
+  expect(preview.textContent).toContain(`還有 ${lane.length - 4} 隻`)
+  const upcoming = host.querySelectorAll('.lane:nth-child(2) .upcoming-jelly')
+  expect(upcoming[0].textContent).toContain(`${lane[1].energy} 發`)
+  expect(upcoming[1].textContent).toContain(`${lane[2].energy} 發`)
+  expect(host.querySelector('.lane:nth-child(3) .launch-button')!.getAttribute('aria-label')).toContain('芒果水母')
+  await click('.queue-preview-button')
+  await click('.queue-preview nav button:nth-child(3)')
+  expect(host.querySelector('.queue-preview')!.textContent).toContain('芒果')
+  expect(host.textContent).not.toContain('檸檬')
+})
 it('switches difficulty with separate unlocks and resets the game to the correct dock size', async () => {
   localStorage.setItem(TIDE_SAVE_KEY, '[1,2,3]')
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   expect(host.querySelector('.level-bar')!.textContent).toContain('簡單 · 第 04 關')
   await click('.nav-button')
   await click('.difficulty-nav button:nth-child(2)')
@@ -51,13 +130,13 @@ it('switches difficulty with separate unlocks and resets the game to the correct
   expect(readTideProgress()).toEqual([1, 2, 3])
   await act(() => root.unmount())
   root = createRoot(host)
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   expect(host.querySelector('.level-bar')!.textContent).toContain('困難 · 第 01 關')
 })
 it('records a normal win under its own ID and continues within that difficulty', async () => {
   localStorage.setItem(TIDE_SAVE_KEY, '[1]')
   localStorage.setItem('jellyOrbitDifficultyV1', 'normal')
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   const level = levelsFor('normal')[0]
   let model = createTide(level)
   for (const id of level.solution!) {
@@ -78,7 +157,7 @@ it('records a normal win under its own ID and continues within that difficulty',
 })
 it('shows reserved return slots and keeps the board in play and pauses while inspecting the full queue', async () => {
   localStorage.setItem('jellyOrbitDifficultyV1', 'hard')
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   await click('.lane:nth-child(1) .launch-button')
   expect(host.querySelector('.dock-capacity')!.textContent).toBe('返航中 1 · 已停泊 0')
   expect(host.querySelector('.dock-available')!.textContent).toBe('可用 3 格')
@@ -109,7 +188,7 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   expect(host.querySelectorAll('.dock-slot')[berth].classList.contains('reserved')).toBe(true)
 })
 it('continues the current attempt from a compact chapter picker without resetting it', async () => {
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   await click('.launch-button')
   await click('.nav-button')
   expect(host.querySelector('select')!.options).toHaveLength(10)
@@ -121,7 +200,7 @@ it('continues the current attempt from a compact chapter picker without resettin
 it('removes hints from controls and shows no-undo challenges without automatic legacy awards', async () => {
   localStorage.setItem(TIDE_SAVE_KEY, '[1]')
   localStorage.setItem('jellyOrbitRecordsV1', '{"1":{"bestLaunches":10,"bestCombo":6,"noHint":true,"efficient":true}}')
-  await act(() => root.render(createElement(App)))
+  await renderGame()
   expect(host.querySelectorAll('.game-tools button')).toHaveLength(3)
   expect(host.querySelector('.game-tools')!.textContent).not.toContain('提示')
   await click('.nav-button')
