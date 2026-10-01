@@ -1,9 +1,10 @@
 import type { StageRecord } from '../storage/tideRecords'
 
-export function Challenges({ record, par, unlocked }: { record?: StageRecord; par: number; unlocked: boolean }) {
+export function Challenges({ record, par }: { record?: StageRecord; par: number }) {
   return <div className="challenge-panel">
     <div className="challenge-heading"><b>航海紀錄</b><span>{record ? `最佳 ${record.bestLaunches} 次派遣 · ${record.bestCombo} 連擊` : '完成這一趟，留下你的第一筆紀錄'}</span></div>
-    {unlocked ? <div className="challenge-badges"><span className={record?.efficient ? 'earned' : ''}>{record?.efficient ? '✓' : '◇'} 精準航行：≤ {par} 次派遣</span><span className={record?.noUndo ? 'earned' : ''}>{record?.noUndo ? '✓' : '◇'} 獨立航行：不用撤回</span></div> : <p>首次通關後開放選用挑戰，不影響關卡解鎖。</p>}
+    <div className="challenge-badges"><span className={record?.efficient ? 'earned' : ''}>{record?.efficient ? '✓' : '◇'} 精準航行：≤ {par} 次派遣</span><span className={record?.noUndo ? 'earned' : ''}>{record?.noUndo ? '✓' : '◇'} 獨立航行：不用撤回</span></div>
+    {!record && <p>首次通關也能達成挑戰，符合條件就會自動記錄。</p>}
   </div>
 }
 

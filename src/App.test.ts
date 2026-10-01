@@ -3,7 +3,8 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from './App'
-import { TICK_MS, createTide, launch, levelsFor, stepTide } from './game/tide'
+import { QueueOverview } from './components/QueueOverview'
+import { COLOR_NAMES, TICK_MS, createTide, launch, levelsFor, stepTide } from './game/tide'
 import { TIDE_SAVE_KEY, readTideProgress } from './storage/tideProgress'
 import { readRecords } from './storage/tideRecords'
 
@@ -103,7 +104,7 @@ it('names yellow mango everywhere and previews the actual next units and remaini
   expect(upcoming[1].textContent).toContain(`${lane[2].energy} 發`)
   expect(host.querySelector('.lane:nth-child(3) .launch-button')!.getAttribute('aria-label')).toContain('芒果水母')
   await click('.queue-preview-button')
-  await click('.queue-preview nav button:nth-child(3)')
+  expect(host.querySelectorAll('.queue-overview-lane')).toHaveLength(3)
   expect(host.querySelector('.queue-preview')!.textContent).toContain('芒果')
   expect(host.textContent).not.toContain('檸檬')
 })
@@ -133,11 +134,18 @@ it('switches difficulty with separate unlocks and resets the game to the correct
   await renderGame()
   expect(host.querySelector('.level-bar')!.textContent).toContain('困難 · 第 01 關')
 })
-it('records a normal win under its own ID and continues within that difficulty', async () => {
+it('awards eligible challenges on the first clear, saves them under the correct difficulty ID and continues', async () => {
   localStorage.setItem(TIDE_SAVE_KEY, '[1]')
   localStorage.setItem('jellyOrbitDifficultyV1', 'normal')
   await renderGame()
   const level = levelsFor('normal')[0]
+  await click('.game-tools button:last-child')
+  const recordButton = [...host.querySelectorAll<HTMLButtonElement>('.settings-list button')].find(b => b.textContent!.includes('航海紀錄與挑戰'))!
+  await act(() => recordButton.click())
+  expect(host.querySelector('.challenge-badges')!.textContent).toContain(`≤ ${level.par} 次派遣`)
+  expect(host.querySelectorAll('.challenge-badges .earned')).toHaveLength(0)
+  expect(host.querySelector('.challenge-panel')!.textContent).toContain('首次通關也能達成')
+  await click('.modal-close')
   let model = createTide(level)
   for (const id of level.solution!) {
     const pool = model.pool.findIndex(j => j.id === id)
@@ -150,6 +158,9 @@ it('records a normal win under its own ID and continues within that difficulty',
   expect(host.querySelector('.result-modal')).not.toBeNull()
   expect(readTideProgress()).toEqual([1, 101])
   expect(readRecords()[101].bestLaunches).toBe(level.solution!.length)
+  expect(readRecords()[101]).toMatchObject({ efficient: true, noUndo: true })
+  expect(host.querySelectorAll('.result-modal .challenge-badges .earned')).toHaveLength(2)
+  expect(host.querySelector('.result-modal')!.textContent).not.toContain('下次重玩')
   expect(readRecords()[1]).toBeUndefined()
   await click('.result-modal .primary')
   expect(host.querySelector('.level-bar')!.textContent).toContain('普通 · 第 02 關')
@@ -169,16 +180,22 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   expect(host.textContent).not.toContain('放大棋盤')
   expect(host.querySelectorAll('.pixel-board')).toHaveLength(1)
   await click('.queue-preview-button')
-  expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes[0].length - 1)
+  expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes.flat().length - 1)
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('隊首')
   expect(host.querySelector('.queue-preview li')!.textContent).toContain('發泡泡')
-  await click('.queue-preview nav button:nth-child(2)')
-  expect(host.querySelector('.queue-preview nav button:nth-child(2)')!.getAttribute('aria-pressed')).toBe('true')
-  expect(host.querySelectorAll('.queue-preview li')).toHaveLength(levelsFor('hard')[0].lanes[1].length)
+  expect(host.querySelector('.queue-preview nav')).toBeNull()
+  const lanes = host.querySelectorAll('.queue-overview-lane')
+  expect(lanes).toHaveLength(3)
+  for (let index = 0; index < 3; index++) {
+    const remaining = levelsFor('hard')[0].lanes[index].slice(index === 0 ? 1 : 0)
+    expect([...lanes[index].querySelectorAll('.queue-unit-name')].map(n => n.textContent)).toEqual(remaining.map(j => COLOR_NAMES[j.color]))
+    expect([...lanes[index].querySelectorAll('.jelly-art b')].map(n => Number(n.textContent))).toEqual(remaining.map(j => j.energy))
+    expect(host.querySelectorAll('.queue-overview-headings p')[index].textContent).toBe(`剩餘 ${remaining.length} 隻`)
+  }
   const before = host.querySelector('.dock-capacity')!.textContent
   await act(() => vi.advanceTimersByTime(20000))
   expect(host.querySelector('.dock-capacity')!.textContent).toBe(before)
-  await click('.modal-close')
+  await click('.queue-modal .primary')
   await act(() => vi.advanceTimersByTime(20000))
   expect(host.querySelector('.dock-capacity')!.textContent).toBe('返航中 0 · 已停泊 1')
   const parked = host.querySelectorAll('.dock-slot')[berth]
@@ -186,6 +203,17 @@ it('shows reserved return slots and keeps the board in play and pauses while ins
   expect(parked.getAttribute('data-jelly-id')).toBe(partner)
   await click(`.dock-slot.occupied[data-jelly-id="${partner}"]`)
   expect(host.querySelectorAll('.dock-slot')[berth].classList.contains('reserved')).toBe(true)
+})
+it('keeps empty lanes in the overview and labels remaining heads, order and ammo accurately', async () => {
+  await act(() => root.render(createElement(QueueOverview, { lanes: [[], [{ id: 'a', color: 'yellow', energy: 3 }, { id: 'b', color: 'aqua', energy: 2 }], []], imageFor: color => `/${color}.webp` })))
+  expect(host.querySelectorAll('.queue-overview-lane')).toHaveLength(3)
+  expect(host.querySelectorAll('.queue-overview-empty')).toHaveLength(2)
+  expect([...host.querySelectorAll('.queue-overview-headings p')].map(n => n.textContent)).toEqual(['剩餘 0 隻', '剩餘 2 隻', '剩餘 0 隻'])
+  const middle = host.querySelector('.queue-overview-lane:nth-child(2)')!
+  expect(middle.querySelector('.queue-unit-head .queue-unit-name')!.textContent).toBe('芒果')
+  expect(middle.querySelector('li:last-child .queue-position')!.textContent).toBe('第 2 隻')
+  expect(middle.querySelector('li:last-child .queue-energy-long')!.textContent).toBe(' 發泡泡')
+  expect(middle.querySelectorAll('img')[1].getAttribute('src')).toBe('/aqua.webp')
 })
 it('continues the current attempt from a compact chapter picker without resetting it', async () => {
   await renderGame()

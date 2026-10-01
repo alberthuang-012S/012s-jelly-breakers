@@ -32,14 +32,14 @@ export function readRecords(): TideRecords {
 export function saveRecords(records: TideRecords): void {
   try { localStorage.setItem(KEY, JSON.stringify(records)) } catch { /* Keep the current session playable. */ }
 }
-export function recordWin(records: TideRecords, stageId: number, run: RunStats, combo: number, par: number, challengeUnlocked: boolean): TideRecords {
+export function recordWin(records: TideRecords, stageId: number, run: RunStats, combo: number, par: number): TideRecords {
   if (!Number.isSafeInteger(run.launches) || run.launches < 1) return records
   const old = records[stageId]
   return { ...records, [stageId]: {
     bestLaunches: Math.min(old?.bestLaunches ?? Infinity, run.launches),
     bestCombo: Math.max(old?.bestCombo ?? 0, combo),
-    noUndo: Boolean(old?.noUndo || (challengeUnlocked && run.undos === 0)),
-    efficient: Boolean(old?.efficient || (challengeUnlocked && run.launches <= par)),
+    noUndo: Boolean(old?.noUndo || run.undos === 0),
+    efficient: Boolean(old?.efficient || run.launches <= par),
     ...(typeof old?.noHint === 'boolean' ? { noHint: old.noHint } : {}),
   } }
 }

@@ -1,0 +1,61 @@
+.queue-modal {
+  width: min(880px, 100%); height: min(720px, calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 24px;
+}
+.queue-modal h2 { margin: 0 48px 0 0; font-size: 22px; }
+.queue-modal .queue-preview { margin-top: 8px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.queue-modal .queue-overview-help { margin: 0 0 14px; font-size: 12px; line-height: 1.7; color: #637d77; }
+.queue-overview-headings, .queue-overview-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.queue-overview-headings { position: sticky; top: 0; z-index: 1; background: #fffefa; }
+.queue-overview-headings>div { padding: 8px 12px; background: #edf5ec; border: 1px solid #ceddd0; border-bottom: 0; border-radius: 14px 14px 0 0; }
+.queue-overview-headings h3 { font-size: 15px; line-height: 20px; color: #416d61; }
+.queue-modal .queue-overview-headings p { margin: 2px 0 0; font-size: 12px; line-height: 16px; }
+.queue-overview-scroll { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: 8px; }
+.queue-overview-scroll:focus-visible { outline: 2px solid #568f80; outline-offset: -2px; }
+.queue-overview-lane { min-width: 0; padding: 8px; border: 1px solid #ceddd0; border-radius: 0 0 14px 14px; background: #fafcf7; }
+.queue-modal .queue-overview-lane ol { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.queue-modal .queue-unit { display: grid; align-items: center; grid-template-columns: 26px 36px minmax(0, 1fr); gap: 0 8px; min-height: 48px; padding: 5px 8px; border: 1px solid #e2e9dd; border-radius: 10px; background: #fffefa; font-size: 13px; }
+.queue-modal .queue-unit-head { min-height: 72px; grid-template-columns: 26px 52px minmax(0, 1fr); border: 2px solid #568f80; background: #edf7ef; margin-bottom: 4px; }
+.queue-modal .queue-position { grid-row: 1 / 3; width: auto; text-align: center; font-size: 11px; color: #637d77; }
+.queue-unit-head .queue-position { color: #416d61; font-weight: 700; }
+.queue-unit .jelly-art { grid-row: 1 / 3; width: 36px; height: 36px; }
+.queue-unit-head .jelly-art { width: 52px; height: 52px; }
+.queue-unit .jelly-art b { height: 20px; min-width: 20px; font-size: 11px; }
+.queue-unit-name { align-self: end; min-width: 0; font-size: 14px; line-height: 18px; white-space: nowrap; }
+.queue-modal .queue-unit-energy { align-self: start; margin: 0; font-size: 12px; line-height: 14px; color: #637d77; white-space: nowrap; }
+.queue-energy-short { display: none; }
+.queue-overview-empty { min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: #637d77; }
+.queue-overview-empty>span { font-size: 24px; color: #568f80; }
+.queue-modal>.primary { flex-shrink: 0; width: 100%; margin-top: 16px; }
+@media (max-width: 699px) {
+  .modal-backdrop:has(.queue-modal) { padding: 8px; }
+  .queue-modal { height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 12px; border-radius: 18px; }
+  .queue-modal h2 { font-size: 20px; line-height: 44px; }
+  .queue-modal .modal-close { top: 12px; right: 12px; }
+  .queue-modal .queue-overview-help { font-size: 11px; line-height: 1.6; margin-bottom: 10px; }
+  .queue-overview-headings, .queue-overview-columns { gap: 6px; }
+  .queue-overview-headings>div { padding: 8px 2px; text-align: center; }
+  .queue-overview-headings h3 { font-size: 13px; }
+  .queue-modal .queue-overview-headings p { font-size: 11px; }
+  .queue-overview-lane { padding: 5px; }
+  .queue-modal .queue-overview-lane ol { gap: 6px; }
+  .queue-modal .queue-unit, .queue-modal .queue-unit-head { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 86px; padding: 5px 2px; }
+  .queue-modal .queue-unit-head { min-height: 104px; margin-bottom: 2px; }
+  .queue-modal .queue-position { font-size: 10px; line-height: 12px; }
+  .queue-unit .jelly-art { width: 32px; height: 32px; }
+  .queue-unit-head .jelly-art { width: 48px; height: 48px; }
+  .queue-unit .jelly-art b { min-width: 17px; height: 17px; font-size: 10px; }
+  .queue-unit-name { align-self: center; font-size: 12px; line-height: 16px; }
+  .queue-modal .queue-unit-energy { align-self: center; font-size: 10px; line-height: 14px; }
+  .queue-energy-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .queue-energy-short { display: inline; }
+  .queue-modal>.primary { margin-top: 10px; }
+}
+@media (max-height: 480px) and (min-width: 600px) {
+  .queue-modal { padding: 12px; }
+  .queue-modal h2 { font-size: 20px; line-height: 44px; }
+  .queue-modal .modal-close { top: 12px; right: 12px; }
+  .queue-modal .queue-overview-help { margin-bottom: 6px; }
+  .queue-overview-headings>div { padding: 6px 10px; }
+  .queue-modal>.primary { margin-top: 8px; }
+}

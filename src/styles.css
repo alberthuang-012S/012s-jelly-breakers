@@ -1518,7 +1518,6 @@ img{
 .challenge-panel>p { margin-top: 7px; }
 .challenge-badges { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; font-size: 10px; color: #9ba68f; }
 .challenge-badges .earned { color: #568663; font-weight: 700; }
-.challenge-unlocked { font-size: 10px !important; margin-top: 10px !important; color: #a38451 !important; }
 @media(max-width:740px) {
   .playfield.pearl-field { width: clamp(250px,31dvh,360px); }
   .shell-tracker { margin-top: 6px; }
